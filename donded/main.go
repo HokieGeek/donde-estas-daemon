@@ -8,11 +8,16 @@ import (
 )
 
 func main() {
-	logger := log.New(os.Stdout, "", 0)
-	portPtr := flag.Int("port", 8585, "Specify the port to use")
+	httpPortPtr := flag.Int("port", 8585, "Specify the port to use")
 	flag.Parse()
 
-	logger.Printf("Serving on port %d\n", *portPtr)
+	logger := log.New(os.Stdout, "", 0)
+	logger.Printf("Serving on port %d\n", *httpPortPtr)
 
-	dondeestas.New(logger, *portPtr)
+	db, err := dondeestas.NewDbClient(dondeestas.CouchDB)
+	if err != nil {
+		panic(err)
+	}
+
+	dondeestas.New(logger, *httpPortPtr, db)
 }

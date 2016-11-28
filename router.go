@@ -9,17 +9,31 @@ import (
 	"net/http"
 )
 
-func UpdatePersonHandler(log *log.Logger, w http.ResponseWriter, r *http.Request) {
+func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	log.Println("UpdatePersonHandler()")
 
 	var update Person
 
 	if err := getJson(r, &update); err != nil {
-		postJson(w, 422, err)
+		postJson(w, http.StatusUnprocessableEntity, err)
 	} else {
 		// TODO: Finish handling person update
 		log.Printf("Received update for person with id: %d\n", update.Id)
-		w.WriteHeader(http.StatusOK)
+
+		var err error
+		create := true // TODO: figure out how to determine if it should be created
+		if create {
+			err = (*db).Create(update)
+		} else {
+			err = (*db).Update(update)
+		}
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("%s\n", err)))
+		} else {
+			w.WriteHeader(http.StatusOK)
+		}
 	}
 }
 
@@ -27,17 +41,24 @@ type PersonDataRequest struct {
 	Id int `json:"id"`
 }
 
-func PersonRequestHandler(log *log.Logger, w http.ResponseWriter, r *http.Request) {
+func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	log.Println("PersonRequestHandler()")
 
 	var req PersonDataRequest
 
 	if err := getJson(r, &req); err != nil {
-		postJson(w, 422, err)
+		postJson(w, http.StatusUnprocessableEntity, err)
 	} else {
-		// TODO: Finish handling person request
+		// TODO: Finish handling person request?
 		log.Printf("Received request for person with id: %d\n", req.Id)
-		w.WriteHeader(http.StatusOK)
+		person, err := (*db).Get(req.Id) // TODO: this pointer dereference
+		if err != nil {
+			// postJson(w, http.StatusBadRequest, err)
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(fmt.Sprintf("%s\n", err)))
+		} else {
+			postJson(w, http.StatusOK, person)
+		}
 	}
 }
 
@@ -71,7 +92,7 @@ func postJson(w http.ResponseWriter, httpStatus int, send interface{}) {
 	}
 }
 
-func New(log *log.Logger, port int) {
+func New(log *log.Logger, port int, db *dbclient) {
 	mux := http.NewServeMux()
 
 	// TODO: new
@@ -80,12 +101,12 @@ func New(log *log.Logger, port int) {
 
 	mux.HandleFunc("/update",
 		func(w http.ResponseWriter, r *http.Request) {
-			UpdatePersonHandler(log, w, r)
+			UpdatePersonHandler(log, db, w, r)
 		})
 
 	mux.HandleFunc("/person",
 		func(w http.ResponseWriter, r *http.Request) {
-			PersonRequestHandler(log, w, r)
+			PersonRequestHandler(log, db, w, r)
 		})
 
 	http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
