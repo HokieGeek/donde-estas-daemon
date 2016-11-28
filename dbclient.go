@@ -7,23 +7,30 @@ const (
 )
 
 type dbclient interface {
-	Init() error
+	Init(dbname, hostname string, port int) error
 	Create(p Person) error
+	Exists(id int) bool
 	Get(id int) (*Person, error)
 	Update(p Person) error
 	Remove(id int) error
 }
 
-func NewDbClient(dbtype DbClientTypes) (*dbclient, error) {
+type DbClientParams struct {
+	DbType           DbClientTypes
+	DbName, Hostname string
+	Port             int
+}
+
+func NewDbClient(params DbClientParams) (*dbclient, error) {
 	var db dbclient
 
-	switch dbtype {
+	switch params.DbType {
 	case CouchDB:
 		couch := new(couchdb)
 		db = dbclient(couch)
 	}
 
-	if err := db.Init(); err != nil {
+	if err := db.Init(params.DbName, params.Hostname, params.Port); err != nil {
 		return nil, err
 	}
 

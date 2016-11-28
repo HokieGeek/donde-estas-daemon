@@ -5,7 +5,7 @@ import (
 )
 
 type Person struct {
-	Id       int    `json:"id"`
+	Id       int    `json:"_id"` // TODO: this is very couchdb-specific?
 	Name     string `json:"name"`
 	Position struct {
 		Tov       time.Time `json:"tov"`

@@ -21,11 +21,10 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 		log.Printf("Received update for person with id: %d\n", update.Id)
 
 		var err error
-		create := true // TODO: figure out how to determine if it should be created
-		if create {
-			err = (*db).Create(update)
-		} else {
+		if (*db).Exists(update.Id) {
 			err = (*db).Update(update)
+		} else {
+			err = (*db).Create(update)
 		}
 
 		if err != nil {

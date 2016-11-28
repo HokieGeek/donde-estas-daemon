@@ -14,7 +14,9 @@ func main() {
 	logger := log.New(os.Stdout, "", 0)
 	logger.Printf("Serving on port %d\n", *httpPortPtr)
 
-	db, err := dondeestas.NewDbClient(dondeestas.CouchDB)
+	params := dondeestas.DbClientParams{dondeestas.CouchDB, "donde", "db", 5984}
+
+	db, err := dondeestas.NewDbClient(params)
 	if err != nil {
 		panic(err)
 	}
