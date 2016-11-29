@@ -19,7 +19,7 @@ type couchdb struct {
 	url      string
 }
 
-func (db *couchdb) req(command, path string, person *Person) (*http.Response, error) {
+func (db couchdb) req(command, path string, person *Person) (*http.Response, error) {
 	var req *http.Request
 	var err error
 	if person != nil {
@@ -53,26 +53,27 @@ func (db *couchdb) req(command, path string, person *Person) (*http.Response, er
 	return resp, nil
 }
 
-func (db *couchdb) createDbIfNotExist() error {
+func (db couchdb) createDbIfNotExist() error {
 	resp, err := db.req("HEAD", db.dbname, nil)
 	if err != nil {
 		return err
 	}
 
 	if resp.StatusCode == 404 {
-		log.Println("Creating database")
+		log.Printf("Creating database: %s\n", db.dbname)
 
 		_, err := db.req("PUT", db.dbname, nil)
 		if err != nil {
 			return err
 		}
-
+	} else {
+		log.Printf("Found database: %s\n", db.dbname)
 	}
 
 	return nil
 }
 
-func (db *couchdb) personPath(id int) string {
+func (db couchdb) personPath(id int) string {
 	var buf bytes.Buffer
 	buf.WriteString(db.dbname)
 	buf.WriteString("/")
@@ -81,8 +82,6 @@ func (db *couchdb) personPath(id int) string {
 }
 
 func (db *couchdb) Init(dbname, hostname string, port int) error {
-	log.Println("Init()")
-
 	db.dbname = dbname
 	db.hostname = hostname
 	db.port = port
@@ -97,14 +96,11 @@ func (db *couchdb) Init(dbname, hostname string, port int) error {
 	return nil
 }
 
-func (db *couchdb) Create(p Person) error {
-	log.Println("Create(p)")
+func (db couchdb) Create(p Person) error {
 	return db.Update(p)
 }
 
-func (db *couchdb) Exists(id int) bool {
-	log.Printf("Exists(%d)\n", id)
-
+func (db couchdb) Exists(id int) bool {
 	resp, err := db.req("HEAD", db.personPath(id), nil)
 	if err != nil {
 		return false
@@ -113,9 +109,7 @@ func (db *couchdb) Exists(id int) bool {
 	return resp.StatusCode == 200
 }
 
-func (db *couchdb) Get(id int) (*Person, error) {
-	log.Printf("Get(%d)\n", id)
-
+func (db couchdb) Get(id int) (*Person, error) {
 	resp, err := db.req("GET", db.personPath(id), nil)
 	if err != nil {
 		return nil, err
@@ -148,9 +142,7 @@ type DocResp struct {
 	Rev string `json:"rev"`
 }
 
-func (db *couchdb) Update(p Person) error {
-	log.Println("Update(p)")
-
+func (db couchdb) Update(p Person) error {
 	resp, err := db.req("PUT", db.personPath(p.Id), &p)
 	if err != nil {
 		return err
@@ -174,15 +166,13 @@ func (db *couchdb) Update(p Person) error {
 		return err
 	}
 
-	log.Println("Response:")
+	log.Println("Update response:")
 	log.Printf("%+v\n", test)
 
 	return nil
 }
 
-func (db *couchdb) Remove(id int) error {
-	log.Printf("Remove(%d)\n", id)
-
+func (db couchdb) Remove(id int) error {
 	resp, err := db.req("DELETE", db.personPath(id), nil)
 	if err != nil {
 		return err

@@ -9,9 +9,40 @@ import (
 	"net/http"
 )
 
-func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
-	log.Println("UpdatePersonHandler()")
+type PersonDataRequest struct {
+	Ids []int `json:"ids"`
+}
 
+type PersonDataResponse struct {
+	People []Person `json:"people"`
+}
+
+func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
+	var req PersonDataRequest
+
+	if err := getJson(r, &req); err != nil {
+		postJson(w, http.StatusUnprocessableEntity, err)
+	} else {
+		log.Printf("Received request for people with ids: %v\n", req.Ids)
+
+		var resp PersonDataResponse
+		resp.People = make([]Person, 0)
+
+		for _, id := range req.Ids {
+			if person, err := (*db).Get(id); err == nil { // TODO: this pointer dereference
+				resp.People = append(resp.People, *person)
+			}
+		}
+
+		if len(resp.People) == len(req.Ids) {
+			postJson(w, http.StatusOK, resp)
+		} else {
+			postJson(w, http.StatusPartialContent, resp)
+		}
+	}
+}
+
+func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	var update Person
 
 	if err := getJson(r, &update); err != nil {
@@ -30,30 +61,7 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Sprintf("%s\n", err)))
 		} else {
-			w.WriteHeader(http.StatusOK)
-		}
-	}
-}
-
-type PersonDataRequest struct {
-	Id int `json:"id"`
-}
-
-func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
-	log.Println("PersonRequestHandler()")
-
-	var req PersonDataRequest
-
-	if err := getJson(r, &req); err != nil {
-		postJson(w, http.StatusUnprocessableEntity, err)
-	} else {
-		log.Printf("Received request for person with id: %d\n", req.Id)
-		person, err := (*db).Get(req.Id) // TODO: this pointer dereference
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte(fmt.Sprintf("%s\n", err)))
-		} else {
-			postJson(w, http.StatusOK, person)
+			w.WriteHeader(http.StatusCreated)
 		}
 	}
 }
@@ -89,17 +97,15 @@ func postJson(w http.ResponseWriter, httpStatus int, send interface{}) {
 }
 
 func New(log *log.Logger, port int, db *dbclient) {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/update",
-		func(w http.ResponseWriter, r *http.Request) {
-			UpdatePersonHandler(log, db, w, r)
-		})
-
-	mux.HandleFunc("/person",
+	http.HandleFunc("/person",
 		func(w http.ResponseWriter, r *http.Request) {
 			PersonRequestHandler(log, db, w, r)
 		})
 
-	http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
+	http.HandleFunc("/update",
+		func(w http.ResponseWriter, r *http.Request) {
+			UpdatePersonHandler(log, db, w, r)
+		})
+
+	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
