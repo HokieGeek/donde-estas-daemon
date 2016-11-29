@@ -17,7 +17,6 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 	if err := getJson(r, &update); err != nil {
 		postJson(w, http.StatusUnprocessableEntity, err)
 	} else {
-		// TODO: Finish handling person update
 		log.Printf("Received update for person with id: %d\n", update.Id)
 
 		var err error
@@ -48,11 +47,9 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 	if err := getJson(r, &req); err != nil {
 		postJson(w, http.StatusUnprocessableEntity, err)
 	} else {
-		// TODO: Finish handling person request?
 		log.Printf("Received request for person with id: %d\n", req.Id)
 		person, err := (*db).Get(req.Id) // TODO: this pointer dereference
 		if err != nil {
-			// postJson(w, http.StatusBadRequest, err)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(fmt.Sprintf("%s\n", err)))
 		} else {
@@ -93,10 +90,6 @@ func postJson(w http.ResponseWriter, httpStatus int, send interface{}) {
 
 func New(log *log.Logger, port int, db *dbclient) {
 	mux := http.NewServeMux()
-
-	// TODO: new
-	// person
-	// update
 
 	mux.HandleFunc("/update",
 		func(w http.ResponseWriter, r *http.Request) {

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 )
 
 type couchdb struct {
@@ -19,21 +20,30 @@ type couchdb struct {
 }
 
 func (db *couchdb) req(command, path string, person *Person) (*http.Response, error) {
-	var data *bytes.Buffer
-
+	var req *http.Request
+	var err error
 	if person != nil {
 		p, err := json.Marshal(*person)
 		if err != nil {
 			return nil, err
 		}
-		data = bytes.NewBuffer(p)
+		data := bytes.NewBuffer(p)
+		req, err = http.NewRequest(command, db.url+"/"+path, data)
+		req.Header.Set("Content-Length", fmt.Sprintf("%d", data.Len()))
+	} else {
+		req, err = http.NewRequest(command, db.url+"/"+path, nil)
 	}
-
-	req, err := http.NewRequest(command, db.url+"/"+path, data)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	bytes, err := httputil.DumpRequest(req, true)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(string(bytes))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -71,7 +81,7 @@ func (db *couchdb) personPath(id int) string {
 }
 
 func (db *couchdb) Init(dbname, hostname string, port int) error {
-	fmt.Println("Init()")
+	log.Println("Init()")
 
 	db.dbname = dbname
 	db.hostname = hostname
@@ -88,12 +98,12 @@ func (db *couchdb) Init(dbname, hostname string, port int) error {
 }
 
 func (db *couchdb) Create(p Person) error {
-	fmt.Println("Create(p)")
+	log.Println("Create(p)")
 	return db.Update(p)
 }
 
 func (db *couchdb) Exists(id int) bool {
-	fmt.Printf("Exists(%d)\n", id)
+	log.Printf("Exists(%d)\n", id)
 
 	resp, err := db.req("HEAD", db.personPath(id), nil)
 	if err != nil {
@@ -104,7 +114,7 @@ func (db *couchdb) Exists(id int) bool {
 }
 
 func (db *couchdb) Get(id int) (*Person, error) {
-	fmt.Printf("Get(%d)\n", id)
+	log.Printf("Get(%d)\n", id)
 
 	resp, err := db.req("GET", db.personPath(id), nil)
 	if err != nil {
@@ -132,23 +142,46 @@ func (db *couchdb) Get(id int) (*Person, error) {
 	return p, nil
 }
 
+type DocResp struct {
+	Id  string `json:"id"`
+	Ok  bool   `json:"ok"`
+	Rev string `json:"rev"`
+}
+
 func (db *couchdb) Update(p Person) error {
-	fmt.Println("Update(p)")
+	log.Println("Update(p)")
 
 	resp, err := db.req("PUT", db.personPath(p.Id), &p)
 	if err != nil {
 		return err
 	}
 
-	if resp.StatusCode != 200 {
-		return errors.New("Encountered an unknown error")
+	if resp.StatusCode != 201 && resp.StatusCode != 202 {
+		return errors.New(fmt.Sprintf("Encountered an unexpected error: %d", resp.StatusCode))
 	}
+
+	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1048576))
+	if err != nil {
+		return err
+	}
+
+	if err = resp.Body.Close(); err != nil {
+		return err
+	}
+
+	test := new(DocResp)
+	if err := json.Unmarshal(body, test); err != nil {
+		return err
+	}
+
+	log.Println("Response:")
+	log.Printf("%+v\n", test)
 
 	return nil
 }
 
 func (db *couchdb) Remove(id int) error {
-	fmt.Printf("Remove(%d)\n", id)
+	log.Printf("Remove(%d)\n", id)
 
 	resp, err := db.req("DELETE", db.personPath(id), nil)
 	if err != nil {
