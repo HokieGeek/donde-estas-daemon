@@ -21,7 +21,7 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 	var req PersonDataRequest
 
 	if err := getJson(r, &req); err != nil {
-		postJson(w, http.StatusUnprocessableEntity, err)
+		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
 		log.Printf("Received request for people with ids: %v\n", req.Ids)
 
@@ -46,7 +46,7 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 	var update Person
 
 	if err := getJson(r, &update); err != nil {
-		postJson(w, http.StatusUnprocessableEntity, err)
+		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
 		log.Printf("Received update for person with id: %d\n", update.Id)
 
@@ -58,8 +58,7 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 		}
 
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("%s\n", err)))
+			http.Error(w, fmt.Sprintf("%s\n", err), http.StatusInternalServerError)
 		} else {
 			w.WriteHeader(http.StatusCreated)
 		}
