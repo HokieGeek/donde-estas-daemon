@@ -82,11 +82,33 @@ func (db couchdb) personPath(id int) string {
 }
 
 func (db *couchdb) Init(dbname, hostname string, port int) error {
+	// TODO: dbname and hostname cannot b e whitespace
+	if len(dbname) == 0 {
+		return errors.New("No database name specified")
+	}
+
+	if len(hostname) == 0 {
+		return errors.New("Hostname not specified")
+	}
+
+	if port < 0 {
+		return errors.New("Invalid port number")
+	}
+
 	db.dbname = dbname
 	db.hostname = hostname
 	db.port = port
 
-	db.url = "http://" + db.hostname + ":" + fmt.Sprintf("%d", db.port)
+	var url bytes.Buffer
+	if db.hostname[:4] != "http" {
+		url.WriteString("http://")
+	}
+	url.WriteString(db.hostname)
+	if db.port > -1 {
+		url.WriteString(":")
+		url.WriteString(fmt.Sprintf("%d", db.port))
+	}
+	db.url = url.String()
 
 	err := db.createDbIfNotExist()
 	if err != nil {
@@ -178,7 +200,7 @@ func (db couchdb) Remove(id int) error {
 		return err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != 200 && resp.StatusCode != 202 {
 		return errors.New("Encountered an unknown error")
 	}
 
