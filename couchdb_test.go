@@ -99,7 +99,7 @@ func splitUrl(url string) (string, int) {
 	return url[:sepPos], p
 }
 
-func TestInit(t *testing.T) {
+func TestCouchDb_Init(t *testing.T) {
 	dummyServer := getTestCouchDbServer(new(DummyCouchDb))
 	defer dummyServer.Close()
 
@@ -134,13 +134,27 @@ func TestInit(t *testing.T) {
 	// TODO: test for whitespace
 }
 
-/*
-func (db couchdb) req(command, path string, person *Person) (*http.Response, error) {
-func (db couchdb) createDbIfNotExist() error {
-func (db couchdb) personPath(id int) string {
-func (db couchdb) Create(p Person) error {
-func (db couchdb) Exists(id int) bool {
-func (db couchdb) Get(id int) (*Person, error) {
-func (db couchdb) Update(p Person) error {
-func (db couchdb) Remove(id int) error {
-*/
+func TestCouchDb_Req(t *testing.T) {
+	t.Skip("TODO")
+}
+func TestCouchDb_CreateDbIfNotExist(t *testing.T) {
+	t.Skip("TODO")
+}
+func TestCouchDb_PersonPath(t *testing.T) {
+	t.Skip("TODO")
+}
+func TestCouchDb_Exists(t *testing.T) {
+	t.Skip("TODO")
+}
+func TestCouchDb_Get(t *testing.T) {
+	t.Skip("TODO")
+}
+func TestCouchDb_Create(t *testing.T) {
+	t.Skip("TODO")
+}
+func TestCouchDb_Update(t *testing.T) {
+	t.Skip("TODO")
+}
+func TestCouchDb_Remove(t *testing.T) {
+	t.Skip("TODO")
+}
