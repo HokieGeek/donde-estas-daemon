@@ -53,24 +53,25 @@ func (db couchdb) req(command, path string, person *Person) (*http.Response, err
 	return resp, nil
 }
 
-func (db couchdb) createDbIfNotExist() error {
+func (db couchdb) createDb() (bool, error) {
+	if db.dbname == "" {
+		return false, errors.New("Database name is blank")
+	}
+
 	resp, err := db.req("HEAD", db.dbname, nil)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	if resp.StatusCode == 404 {
-		log.Printf("Creating database: %s\n", db.dbname)
-
-		_, err := db.req("PUT", db.dbname, nil)
-		if err != nil {
-			return err
-		}
-	} else {
-		log.Printf("Found database: %s\n", db.dbname)
+	if resp.StatusCode != 404 {
+		return false, nil
 	}
 
-	return nil
+	if _, err := db.req("PUT", db.dbname, nil); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (db couchdb) personPath(id string) string {
@@ -82,6 +83,7 @@ func (db couchdb) personPath(id string) string {
 }
 
 func (db *couchdb) Init(dbname, hostname string, port int) error {
+	log.Printf("Init(%s, %s, %d)", dbname, hostname, port)
 	// TODO: dbname and hostname cannot b e whitespace
 	if len(dbname) == 0 {
 		return errors.New("No database name specified")
@@ -100,7 +102,7 @@ func (db *couchdb) Init(dbname, hostname string, port int) error {
 	db.port = port
 
 	var url bytes.Buffer
-	if db.hostname[:4] != "http" {
+	if len(db.hostname) < 4 || db.hostname[:4] != "http" {
 		url.WriteString("http://")
 	}
 	url.WriteString(db.hostname)
@@ -110,15 +112,21 @@ func (db *couchdb) Init(dbname, hostname string, port int) error {
 	}
 	db.url = url.String()
 
-	err := db.createDbIfNotExist()
-	if err != nil {
-		return err
+	if ok, err := db.createDb(); !ok {
+		if err != nil {
+			return err
+		} else {
+			log.Printf("Found database: %s\n", db.dbname)
+		}
+	} else {
+		log.Printf("Created database: %s\n", db.dbname)
 	}
 
 	return nil
 }
 
 func (db couchdb) Create(p Person) error {
+	log.Printf("Create(%s)\n", p.Id)
 	return db.Update(p)
 }
 
@@ -165,6 +173,7 @@ type DocResp struct {
 }
 
 func (db couchdb) Update(p Person) error {
+	log.Printf("Update(%s)\n", p.Id)
 	resp, err := db.req("PUT", db.personPath(p.Id), &p)
 	if err != nil {
 		return err
@@ -188,6 +197,7 @@ func (db couchdb) Update(p Person) error {
 		return err
 	}
 
+	// TODO: use this
 	log.Println("Update response:")
 	log.Printf("%+v\n", test)
 
