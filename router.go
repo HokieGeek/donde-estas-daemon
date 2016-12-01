@@ -20,7 +20,7 @@ type PersonDataResponse struct {
 func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	var req PersonDataRequest
 
-	if err := getJson(r, &req); err != nil {
+	if err := getJson(r.Body, &req); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
 		log.Printf("Received request for people with ids: %v\n", req.Ids)
@@ -45,7 +45,7 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	var update Person
 
-	if err := getJson(r, &update); err != nil {
+	if err := getJson(r.Body, &update); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
 		log.Printf("Received update for person with id: %d\n", update.Id)
@@ -65,13 +65,13 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 	}
 }
 
-func getJson(r *http.Request, data interface{}) error {
-	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+func getJson(requestBody io.ReadCloser, data interface{}) error {
+	body, err := ioutil.ReadAll(io.LimitReader(requestBody, 1048576))
 	if err != nil {
 		return err
 	}
 
-	if err := r.Body.Close(); err != nil {
+	if err := requestBody.Close(); err != nil {
 		return err
 	}
 
