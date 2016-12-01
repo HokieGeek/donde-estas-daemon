@@ -13,7 +13,7 @@ import (
 
 type DummyCouchDb struct {
 	Name   string
-	People map[int]string
+	People map[string]string
 }
 
 func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
@@ -27,10 +27,9 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 
 			switch r.Method {
 			case "GET":
-				id, _ := strconv.Atoi(path[1])
-				if _, ok := db.People[id]; ok {
+				if _, ok := db.People[path[1]]; ok {
 					w.WriteHeader(http.StatusOK)
-					fmt.Fprint(w, db.People[id])
+					fmt.Fprint(w, db.People[path[1]])
 				} else {
 					w.WriteHeader(http.StatusNotFound)
 				}
@@ -39,16 +38,15 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 					db.Name = path[0]
 					w.WriteHeader(http.StatusCreated)
 				} else {
-					id, _ := strconv.Atoi(path[1])
-					if _, ok := db.People[id]; ok {
+					if _, ok := db.People[path[1]]; ok {
 						defer r.Body.Close()
 						body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 						if err != nil {
 							w.WriteHeader(http.StatusBadRequest)
 							fmt.Fprint(w, err)
 						} else {
-							db.People[id] = string(body)
-							fmt.Println(db.People[id])
+							db.People[path[1]] = string(body)
+							fmt.Println(db.People[path[1]])
 							w.WriteHeader(http.StatusCreated)
 						}
 					} else {
@@ -63,8 +61,7 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 						w.WriteHeader(http.StatusNotFound)
 					}
 				} else {
-					id, _ := strconv.Atoi(path[1])
-					if _, ok := db.People[id]; ok {
+					if _, ok := db.People[path[1]]; ok {
 						w.WriteHeader(http.StatusOK)
 					} else {
 						w.WriteHeader(http.StatusNotFound)
@@ -72,9 +69,8 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 				}
 			case "DELETE":
 				if len(path) >= 1 {
-					id, _ := strconv.Atoi(path[1])
-					if _, ok := db.People[id]; ok {
-						delete(db.People, id)
+					if _, ok := db.People[path[1]]; ok {
+						delete(db.People, path[1])
 						w.WriteHeader(http.StatusOK)
 					} else {
 						w.WriteHeader(http.StatusNotFound)

@@ -5,7 +5,7 @@ import (
 )
 
 type Person struct {
-	Id       int    `json:"id"`
+	Id       string `json:"id"`
 	Name     string `json:"name"`
 	Position struct {
 		Tov       time.Time `json:"tov"`

@@ -73,11 +73,11 @@ func (db couchdb) createDbIfNotExist() error {
 	return nil
 }
 
-func (db couchdb) personPath(id int) string {
+func (db couchdb) personPath(id string) string {
 	var buf bytes.Buffer
 	buf.WriteString(db.dbname)
 	buf.WriteString("/")
-	buf.WriteString(fmt.Sprintf("%d", id))
+	buf.WriteString(id)
 	return buf.String()
 }
 
@@ -122,7 +122,7 @@ func (db couchdb) Create(p Person) error {
 	return db.Update(p)
 }
 
-func (db couchdb) Exists(id int) bool {
+func (db couchdb) Exists(id string) bool {
 	resp, err := db.req("HEAD", db.personPath(id), nil)
 	if err != nil {
 		return false
@@ -131,7 +131,7 @@ func (db couchdb) Exists(id int) bool {
 	return resp.StatusCode == 200
 }
 
-func (db couchdb) Get(id int) (*Person, error) {
+func (db couchdb) Get(id string) (*Person, error) {
 	resp, err := db.req("GET", db.personPath(id), nil)
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ func (db couchdb) Update(p Person) error {
 	return nil
 }
 
-func (db couchdb) Remove(id int) error {
+func (db couchdb) Remove(id string) error {
 	resp, err := db.req("DELETE", db.personPath(id), nil)
 	if err != nil {
 		return err

@@ -9,10 +9,10 @@ const (
 type dbclient interface {
 	Init(dbname, hostname string, port int) error
 	Create(p Person) error
-	Exists(id int) bool
-	Get(id int) (*Person, error)
+	Exists(id string) bool
+	Get(id string) (*Person, error)
 	Update(p Person) error
-	Remove(id int) error
+	Remove(id string) error
 }
 
 type DbClientParams struct {

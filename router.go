@@ -10,7 +10,7 @@ import (
 )
 
 type PersonDataRequest struct {
-	Ids []int `json:"ids"`
+	Ids []string `json:"ids"`
 }
 
 type PersonDataResponse struct {
