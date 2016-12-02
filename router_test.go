@@ -34,13 +34,21 @@ func TestRouting_PostJson(t *testing.T) {
 		t.Fatalf("Expected http status %d but found %d", expectedStatus, response.Code)
 	}
 
-	fmt.Println(response.Body)
+	fmt.Print("'")
+	fmt.Print(response.Body)
+	fmt.Println("'")
 	var person Person
+	if err := json.Unmarshal(response.Body, &person); err != nil {
+		t.Fatalf("Encountered error when retrieving json from string: %s", err)
+	} else if !arePersonEqual(expectedPerson, &person) {
+		t.Fatal("Did not receive expected person")
+	}
+	/*
 	if err := getJson(ioutil.NopCloser(response.Body), person); err != nil {
 		t.Fatalf("Encountered error when retrieving json from string: %s", err)
 		// TODO: } else if !arePersonEqual(expectedPerson, &person) {
 		// t.Fatal("Did not receive expected person")
-	}
+	}*/
 }
 /*
 func TestRouting_UpdatePersonHandler(t *testing.T) {
