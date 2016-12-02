@@ -33,6 +33,7 @@ func TestRouting_PostJson(t *testing.T) {
 		t.Fatalf("Expected http status %d but found %d", expectedStatus, response.Code)
 	}
 
+	fmt.Println(response.Body)
 	var person Person
 	if err := getJson(ioutil.NopCloser(response.Body), person); err != nil {
 		t.Fatalf("Encountered error when retrieving json from string: %s", err)
@@ -40,14 +41,13 @@ func TestRouting_PostJson(t *testing.T) {
 		// t.Fatal("Did not receive expected person")
 	}
 }
-
 /*
 func TestRouting_UpdatePersonHandler(t *testing.T) {
 	log := log.New(os.Stdout, "", 0)
 	response := httptest.NewRecorder()
 
 	expectedPerson, _ := createRandomPerson()
-	req := httptest.NewRequest("GET", "http://blah.com/foo", bytes.NewBufferString(expectedPersonStr))
+    req := httptest.NewRequest("GET", createRandomString(), bytes.NewBufferString(expectedPersonStr))
 
 	db, server, _ := createRandomDbClient()
 	defer server.Close()
@@ -59,7 +59,7 @@ func TestRouting_PersonRequestHandler(t *testing.T) {
 	log := log.New(os.Stdout, "", 0)
 	response := httptest.NewRecorder()
 
-	req := httptest.NewRequest("GET", "http://blah.com/foo", bytes.NewBufferString(expectedPersonStr))
+    req := httptest.NewRequest("GET", createRandomString(), bytes.NewBufferString(expectedPersonStr))
 
 	db, server, _ := createRandomDbClient()
 	defer server.Close()
