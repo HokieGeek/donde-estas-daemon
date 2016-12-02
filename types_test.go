@@ -52,7 +52,7 @@ func arePersonEqual(p1, p2 *Person) bool {
 		return false
 	}
 	if p1.Position.Tov != p2.Position.Tov {
-		fmt.Println("TOVs don't match")
+		fmt.Printf("TOVs don't match: %s vs %s\n", p1.Position.Tov.Format(time.RFC3339), p2.Position.Tov.Format(time.RFC3339))
 		return false
 	}
 	if p1.Position.Latitude != p2.Position.Latitude {
