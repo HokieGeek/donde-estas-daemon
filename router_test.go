@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	// "io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -38,7 +38,7 @@ func TestRouting_PostJson(t *testing.T) {
 	fmt.Print(response.Body)
 	fmt.Println("'")
 	var person Person
-	if err := json.Unmarshal(response.Body, &person); err != nil {
+	if err := json.Unmarshal(response.Body.Bytes(), &person); err != nil {
 		t.Fatalf("Encountered error when retrieving json from string: %s", err)
 	} else if !arePersonEqual(expectedPerson, &person) {
 		t.Fatal("Did not receive expected person")
