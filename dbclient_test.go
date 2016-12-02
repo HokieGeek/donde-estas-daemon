@@ -11,6 +11,17 @@ func createRandomDbClientParams() (DbClientParams, *httptest.Server) {
 	return params, server
 }
 
+func createRandomDbClient() (*dbclient, *httptest.Server, error) {
+	params, server := createRandomDbClientParams()
+
+	client, err := NewDbClient(params)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return client, server, nil
+}
+
 func TestNewDbClient(t *testing.T) {
 	params, server := createRandomDbClientParams()
 

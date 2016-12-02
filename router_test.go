@@ -7,17 +7,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	// "math/rand"
+	// "log"
 )
-
-func TestNewRouter(t *testing.T) {
-	t.Skip("TODO?")
-	// req := httptest.NewRequest("GET", "http://example.com/foo", nil)
-	// w := httptest.NewRecorder()
-
-	// dummyServer := getServer(expectedData)
-	// defer dummyServer.Close()
-	// dummyServer.URL
-}
 
 func TestRouting_GetJson(t *testing.T) {
 	expectedPerson, _ := createRandomPerson()
@@ -47,17 +39,40 @@ func TestRouting_PostJson(t *testing.T) {
 		// TODO: } else if !arePersonEqual(expectedPerson, &person) {
 		// t.Fatal("Did not receive expected person")
 	}
-	// TODO: test more
 }
 
 /*
-// func TestRouting_New(log *log.Logger, port int, db *dbclient) {
+func TestRouting_UpdatePersonHandler(t *testing.T) {
+	log := log.New(os.Stdout, "", 0)
+	response := httptest.NewRecorder()
 
-func TestRouting_PersonRequestHandler(t *testing.T) {
-	PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request)
+	expectedPerson, _ := createRandomPerson()
+	req := httptest.NewRequest("GET", "http://blah.com/foo", bytes.NewBufferString(expectedPersonStr))
+
+	db, server, _ := createRandomDbClient()
+	defer server.Close()
+
+	UpdatePersonHandler(log, db, response, req)
 }
 
-func TestRouting_UpdatePersonHandler(t *testing.T) {
-	UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request)
+func TestRouting_PersonRequestHandler(t *testing.T) {
+	log := log.New(os.Stdout, "", 0)
+	response := httptest.NewRecorder()
+
+	req := httptest.NewRequest("GET", "http://blah.com/foo", bytes.NewBufferString(expectedPersonStr))
+
+	db, server, _ := createRandomDbClient()
+	defer server.Close()
+
+	PersonRequestHandler(log, db, response, req)
+}
+
+func TestRouting_New(t *testing.T) { // TODO TEST FOR BAD INPUT VALUES
+	port := rand.Int()
+	log := log.New(os.Stdout, "", 0)
+	db, server, _ := createRandomDbClient()
+	defer server.Close()
+
+	New(log *log.Logger, port int, db *dbclient)
 }
 */
