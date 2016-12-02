@@ -44,31 +44,24 @@ func createRandomPerson() (*Person, error) {
 
 func arePersonEqual(p1, p2 *Person) bool {
 	if p1.Id != p2.Id {
-		fmt.Println("Ids don't match")
 		return false
 	}
 	if p1.Name != p2.Name {
-		fmt.Println("Names don't match")
 		return false
 	}
-	if p1.Position.Tov != p2.Position.Tov {
-		fmt.Printf("TOVs don't match: %s vs %s\n", p1.Position.Tov.Format(time.RFC3339), p2.Position.Tov.Format(time.RFC3339))
+	if !p1.Position.Tov.Equal(p2.Position.Tov) {
 		return false
 	}
 	if p1.Position.Latitude != p2.Position.Latitude {
-		fmt.Println("Lats don't match")
 		return false
 	}
 	if p1.Position.Longitude != p2.Position.Longitude {
-		fmt.Println("Lons don't match")
 		return false
 	}
 	if p1.Position.Elevation != p2.Position.Elevation {
-		fmt.Println("Elevations don't match")
 		return false
 	}
 	if p1.Visible != p2.Visible {
-		fmt.Println("Visibilities don't match")
 		return false
 	}
 	/* TODO
