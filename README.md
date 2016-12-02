@@ -8,7 +8,7 @@ docker run -d --name couchdb couchdb
 docker run -d -p 8080:8080 --link couchdb:db hokiegeek/donde-estas-daemon
 ```
 
-###### Adding an entry
+###### Adding entries
 ```sh
 curl localhost:8080/update --data \
 '{
