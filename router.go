@@ -95,7 +95,7 @@ func postJson(w http.ResponseWriter, httpStatus int, send interface{}) {
 	}
 }
 
-func New(log *log.Logger, port int, db *dbclient) {
+func ListenAndServe(log *log.Logger, port int, db *dbclient) error {
 	http.HandleFunc("/person",
 		func(w http.ResponseWriter, r *http.Request) {
 			PersonRequestHandler(log, db, w, r)
@@ -106,5 +106,5 @@ func New(log *log.Logger, port int, db *dbclient) {
 			UpdatePersonHandler(log, db, w, r)
 		})
 
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }

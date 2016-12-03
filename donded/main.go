@@ -29,5 +29,5 @@ func main() {
 		panic(err)
 	}
 
-	dondeestas.New(logger, *httpPortPtr, db)
+	logger.Fatal(dondeestas.ListenAndServe(logger, *httpPortPtr, db))
 }
