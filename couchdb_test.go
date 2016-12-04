@@ -53,6 +53,7 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 					if path[1] == "" {
 						w.WriteHeader(http.StatusNotFound)
 					} else {
+						// TODO: check that If-Match matches what was created during the previous put!
 						defer r.Body.Close()
 						body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 						if err != nil {
@@ -78,6 +79,8 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 					}
 				} else {
 					if _, ok := db.People[path[1]]; ok {
+						// TODO: just return what is set during the PUT
+						w.Header().Set("ETag", createRandomString())
 						w.WriteHeader(http.StatusOK)
 					} else {
 						w.WriteHeader(http.StatusNotFound)
@@ -134,14 +137,19 @@ func TestCouchDb_Req(t *testing.T) {
 
 	// TODO: do I want to test that I get a "valid" response?
 
+	var req request
+	req.command = "HEAD"
+	req.path = db.dbname
+
 	// Good values
 	/// Without a person
-	if _, err := db.req("HEAD", db.dbname, nil); err != nil {
+	if _, err := db.req(&req); err != nil {
 		t.Fatalf("Unexpectedly encountered error: %s", err)
 	}
 
 	/// With person
-	if _, err := db.req("HEAD", db.dbname, person); err != nil {
+	req.person = person
+	if _, err := db.req(&req); err != nil {
 		t.Fatalf("Unexpectedly encountered error: %s", err)
 	}
 
@@ -167,7 +175,8 @@ func TestCouchDb_Req(t *testing.T) {
 
 	// Simulate not having a network connection
 	server.Close()
-	if _, err := db.req("HEAD", db.dbname, nil); err == nil {
+	req.person = nil
+	if _, err := db.req(&req); err == nil {
 		t.Fatal("Did not receive expected connection error")
 	}
 }

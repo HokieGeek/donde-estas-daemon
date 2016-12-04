@@ -19,19 +19,26 @@ type couchdb struct {
 	url      string
 }
 
-func (db couchdb) req(command, path string, person *Person) (*http.Response, error) {
+type request struct {
+	command string
+	path    string
+	person  *Person
+	headers map[string]string
+}
+
+func (db couchdb) req(params *request) (*http.Response, error) {
 	var req *http.Request
 	var err error
-	if person != nil {
-		p, err := json.Marshal(*person)
+	if params.person != nil {
+		p, err := json.Marshal(params.person)
 		if err != nil {
 			return nil, err
 		}
 		data := bytes.NewBuffer(p)
-		req, err = http.NewRequest(command, db.url+"/"+path, data)
+		req, err = http.NewRequest(params.command, db.url+"/"+params.path, data)
 		req.Header.Set("Content-Length", fmt.Sprintf("%d", data.Len()))
 	} else {
-		req, err = http.NewRequest(command, db.url+"/"+path, nil)
+		req, err = http.NewRequest(params.command, db.url+"/"+params.path, nil)
 	}
 	if err != nil {
 		return nil, err
@@ -58,7 +65,7 @@ func (db couchdb) createDb() (bool, error) {
 		return false, errors.New("Database name is blank")
 	}
 
-	resp, err := db.req("HEAD", db.dbname, nil)
+	resp, err := db.req(&request{"HEAD", db.dbname, nil, nil})
 	if err != nil {
 		return false, err
 	}
@@ -67,7 +74,7 @@ func (db couchdb) createDb() (bool, error) {
 		return false, nil
 	}
 
-	if _, err := db.req("PUT", db.dbname, nil); err != nil {
+	if _, err := db.req(&request{"PUT", db.dbname, nil, nil}); err != nil {
 		return false, err
 	}
 
@@ -131,7 +138,7 @@ func (db couchdb) Create(p Person) error {
 }
 
 func (db couchdb) Exists(id string) bool {
-	resp, err := db.req("HEAD", db.personPath(id), nil)
+	resp, err := db.req(&request{"HEAD", db.personPath(id), nil, nil})
 	if err != nil {
 		return false
 	}
@@ -140,7 +147,7 @@ func (db couchdb) Exists(id string) bool {
 }
 
 func (db couchdb) Get(id string) (*Person, error) {
-	resp, err := db.req("GET", db.personPath(id), nil)
+	resp, err := db.req(&request{"GET", db.personPath(id), nil, nil})
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +181,23 @@ type DocResp struct {
 
 func (db couchdb) Update(p Person) error {
 	log.Printf("Update(%s)\n", p.Id)
-	resp, err := db.req("PUT", db.personPath(p.Id), &p)
+
+	// First, retrieve the revision id
+	var req request
+	req.command = "HEAD"
+	req.path = db.personPath(p.Id)
+
+	if resp, err := db.req(&req); err != nil {
+		return err
+	} else if resp.StatusCode == 200 {
+		req.headers = make(map[string]string)
+		req.headers["If-Match"] = resp.Header.Get("ETag")
+	}
+
+	// Perform the update
+	req.command = "PUT"
+	req.person = &p
+	resp, err := db.req(&req)
 	if err != nil {
 		return err
 	}
@@ -205,7 +228,7 @@ func (db couchdb) Update(p Person) error {
 }
 
 func (db couchdb) Remove(id string) error {
-	resp, err := db.req("DELETE", db.personPath(id), nil)
+	resp, err := db.req(&request{"DELETE", db.personPath(id), nil, nil})
 	if err != nil {
 		return err
 	}
