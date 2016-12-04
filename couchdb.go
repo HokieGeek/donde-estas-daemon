@@ -39,11 +39,11 @@ func (db couchdb) req(command, path string, person *Person) (*http.Response, err
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	bytes, err := httputil.DumpRequest(req, true)
-	if err != nil {
+	if bytes, err := httputil.DumpRequest(req, true); err != nil {
 		log.Println(err)
+	} else {
+		log.Println(string(bytes))
 	}
-	log.Println(string(bytes))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

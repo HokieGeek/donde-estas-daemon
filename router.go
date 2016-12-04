@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 )
 
 type PersonDataRequest struct {
@@ -19,6 +20,12 @@ type PersonDataResponse struct {
 
 func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	var req PersonDataRequest
+
+	if bytes, err := httputil.DumpRequest(r, true); err != nil {
+		log.Println(err)
+	} else {
+		log.Println(string(bytes))
+	}
 
 	if err := getJson(r.Body, &req); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
@@ -44,6 +51,12 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 
 func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	var update Person
+
+	bytes, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(string(bytes))
 
 	if err := getJson(r.Body, &update); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
