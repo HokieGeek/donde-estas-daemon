@@ -52,11 +52,11 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	var update Person
 
-	bytes, err := httputil.DumpRequest(r, true)
-	if err != nil {
+	if bytes, err := httputil.DumpRequest(r, true); err != nil {
 		log.Println(err)
+	} else {
+		log.Println(string(bytes))
 	}
-	log.Println(string(bytes))
 
 	if err := getJson(r.Body, &update); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
@@ -71,6 +71,7 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 		}
 
 		if err != nil {
+			log.Printf("ERROR: %d: %s\n", http.StatusInternalServerError, err)
 			http.Error(w, fmt.Sprintf("%s\n", err), http.StatusInternalServerError)
 		} else {
 			w.WriteHeader(http.StatusCreated)

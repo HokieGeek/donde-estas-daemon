@@ -203,7 +203,7 @@ func (db couchdb) Update(p Person) error {
 	}
 
 	if resp.StatusCode != 201 && resp.StatusCode != 202 {
-		return errors.New(fmt.Sprintf("Encountered an unexpected error: %d", resp.StatusCode))
+		return errors.New(fmt.Sprintf("Encountered an unexpected database error: %d", resp.StatusCode))
 	}
 
 	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1048576))
