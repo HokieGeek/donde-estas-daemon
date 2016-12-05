@@ -50,9 +50,7 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	var update Person
 
-	if bytes, err := httputil.DumpRequest(r, true); err != nil {
-		log.Println(err)
-	} else {
+	if bytes, err := httputil.DumpRequest(r, true); err == nil {
 		log.Println(string(bytes))
 	}
 
