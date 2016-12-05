@@ -3,6 +3,7 @@ package dondeestas
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
