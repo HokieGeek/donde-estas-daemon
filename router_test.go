@@ -92,8 +92,6 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 		t.Fatal("Retrieved Person is not equivalent to the expected Person")
 	}
 	
-	// t.Skip("The rest fails unexpectedly")
-	
 	// Test updating the same person
 	expectedPerson.Name = createRandomString()
 	expectedPersonJson, _ = json.Marshal(expectedPerson)
@@ -114,6 +112,11 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 	req = httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(expectedPersonStr))
 	req.Body.Close()
 	UpdatePersonHandler(log, db, response, req)
+	if response.Code != http.StatusInternalServerError {
+		t.Errorf("Did not get expected HTTP error status code of %d. Instead got: %d", http.StatusInternalServerError, response.Code)
+	}
+	
+	t.Skip("The rest fails unexpectedly")
 	
 	// Test when the database is unable to comply with the request
 	req = httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(expectedPersonStr))
