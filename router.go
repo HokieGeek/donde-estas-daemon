@@ -78,12 +78,10 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 }
 
 func getJson(requestBody io.ReadCloser, data interface{}) error {
-	body, err := ioutil.ReadAll(io.LimitReader(requestBody, 1048576))
+	defer requestBody.Close();
+	
+	body, err := ioutil.ReadAll(requestBody)
 	if err != nil {
-		return err
-	}
-
-	if err := requestBody.Close(); err != nil {
 		return err
 	}
 
