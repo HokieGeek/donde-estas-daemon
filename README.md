@@ -1,4 +1,4 @@
-# ¿Dónde Estás? Daemon [![Build Status](https://travis-ci.org/HokieGeek/donde-estas-daemon.svg?branch=master)](https://travis-ci.org/HokieGeek/donde-estas-daemon) [![Coverage](http://gocover.io/_badge/github.com/HokieGeek/donde-estas-daemon)](http://gocover.io/github.com/HokieGeek/donde-estas-daemon) [![GoDoc](http://godoc.org/github.com/HokieGeek/donde-estas-daemon?status.png)](http://godoc.org/github.com/HokieGeek/donde-estas-daemon)
+# ¿Dónde Estás? Daemon [![Build Status](https://travis-ci.org/HokieGeek/donde-estas-daemon.svg?branch=master)](https://travis-ci.org/HokieGeek/donde-estas-daemon) [![Coverage Status](https://coveralls.io/repos/github/HokieGeek/donde-estas-daemon/badge.svg?branch=master)](https://coveralls.io/github/HokieGeek/donde-estas-daemon?branch=master) [![Coverage](http://gocover.io/_badge/github.com/HokieGeek/donde-estas-daemon)](http://gocover.io/github.com/HokieGeek/donde-estas-daemon) [![GoDoc](http://godoc.org/github.com/HokieGeek/donde-estas-daemon?status.png)](http://godoc.org/github.com/HokieGeek/donde-estas-daemon)
 The server side to the [¿Dónde Estás?](https://github.com/HokieGeek/DondeEstas) android app
 
 ##### Example usage
