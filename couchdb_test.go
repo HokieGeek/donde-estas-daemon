@@ -80,7 +80,7 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 				} else {
 					if _, ok := db.People[path[1]]; ok {
 						// TODO: just return what is set during the PUT
-						w.Header().Set("ETag", createRandomString())
+						w.Header().Set("Etag", createRandomString())
 						w.WriteHeader(http.StatusOK)
 					} else {
 						w.WriteHeader(http.StatusNotFound)

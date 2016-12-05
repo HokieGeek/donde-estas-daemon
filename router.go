@@ -61,7 +61,7 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 	if err := getJson(r.Body, &update); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
-		log.Printf("Received update for person with id: %d\n", update.Id)
+		log.Printf("Received update for person with id: %s\n", update.Id)
 
 		var err error
 		if (*db).Exists(update.Id) {

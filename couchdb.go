@@ -46,15 +46,31 @@ func (db couchdb) req(params *request) (*http.Response, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
+	if params.headers != nil {
+		for k, v := range params.headers {
+			req.Header.Set(k, v)
+		}
+	}
+
 	if bytes, err := httputil.DumpRequest(req, true); err != nil {
 		log.Println(err)
 	} else {
+		log.Println("::Request Begin::")
 		log.Println(string(bytes))
+		log.Println("::Request End::")
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
+	}
+
+	if bytes, err := httputil.DumpResponse(resp, true); err != nil {
+		log.Println(err)
+	} else {
+		log.Println("::Response Begin::")
+		log.Println(string(bytes))
+		log.Println("::Response End::")
 	}
 
 	return resp, nil
@@ -191,7 +207,7 @@ func (db couchdb) Update(p Person) error {
 		return err
 	} else if resp.StatusCode == 200 {
 		req.headers = make(map[string]string)
-		req.headers["If-Match"] = resp.Header.Get("ETag")
+		req.headers["If-Match"] = resp.Header.Get("Etag")
 	}
 
 	// Perform the update
