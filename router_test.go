@@ -30,6 +30,20 @@ func TestRouting_GetJson(t *testing.T) {
 	if err := getJson(req.Body, person); err != nil {
 		t.Fatalf("Encountered error when retrieving json from string: %s", err)
 	}
+	
+	// Test forcing the function to read a closed stream
+	req = httptest.NewRequest("GET", "http://blah.com/foo", bytes.NewBufferString(expectedPersonStr))
+	if err := req.Body.Close(); err != nil {
+		t.Fatalf("Could not close test request body!")
+	}
+	if err := getJson(req.Body, person); err == nil {
+		t.Error("Did not receive expected error when reading closed stream")
+	}
+	
+	// Incorrect JSON object
+	if err := getJson(`{"id":"foo"}`, person); err == nil  {
+		t.Error("Did not receive expected error on bad JSON unmarshalling")
+	}
 }
 
 func TestRouting_PostJson(t *testing.T) {
@@ -48,23 +62,39 @@ func TestRouting_PostJson(t *testing.T) {
 	} else if !arePersonEqual(expectedPerson, &person) {
 		t.Fatal("Did not receive expected person")
 	}
-	// TODO: more?
+	
+	// TODO: Can the send be nil? Can response be nil?
 }
 
 func TestRouting_UpdatePersonHandler(t *testing.T) {
 	log := log.New(os.Stdout, "", 0)
 	response := httptest.NewRecorder()
-
+	db, server, _ := createRandomDbClient()
+	
+	// Build a person
 	expectedPerson, _ := createRandomPerson()
 	expectedPersonJson, _ := json.Marshal(expectedPerson)
 	expectedPersonStr := string(expectedPersonJson)
+		
+	// Test creating a new person
 	req := httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(expectedPersonStr))
-
-	db, server, _ := createRandomDbClient()
-	defer server.Close()
-
 	UpdatePersonHandler(log, db, response, req)
+	if response.Code != http.StatusCreated {
+		t.Errorf("Did not get expected HTTP status code. Instead got: %d", response.Code)
+	}
 
+	if person, err := (*db).Get(expectedPerson.Id); err != nil {
+		t.Fatalf("Encountered error when retrieving person: %s", err)
+	} else if !arePersonEqual(expectedPerson, person) {
+		t.Fatal("Retrieved Person is not equivalent to the expected Person")
+	}
+	
+	// Test updating the same person
+	expectedPerson.Name = createRandomString()
+	expectedPersonJson, _ = json.Marshal(expectedPerson)
+	expectedPersonStr = string(expectedPersonJson)
+	req = httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(expectedPersonStr))
+	UpdatePersonHandler(log, db, response, req)
 	if response.Code != http.StatusCreated {
 		t.Errorf("Did not get expected HTTP status code. Instead got: %d", response.Code)
 	}
@@ -75,7 +105,18 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 		t.Fatal("Retrieved Person is not equivalent to the expected Person")
 	}
 
-	// TODO: more?
+	// Test unable to process the body
+	req = httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(expectedPersonStr))
+	req.Body.Close()
+	UpdatePersonHandler(log, db, response, req)
+	
+	// Test when the database is unable to comply with the request
+	req = httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(expectedPersonStr))
+	server.Close()
+	UpdatePersonHandler(log, db, response, req)
+	if response.Code != http.StatusInternalServerError {
+		t.Errorf("Did not get expected HTTP status code of %d. Instead got: %d", http.StatusInternalServerError, response.Code)
+	}
 }
 
 func TestRouting_PersonRequestHandler(t *testing.T) {
