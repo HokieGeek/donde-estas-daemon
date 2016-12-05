@@ -41,7 +41,7 @@ func TestRouting_GetJson(t *testing.T) {
 	}
 	
 	// Incorrect JSON object
-	if err := getJson(bytes.NewBufferString(`{"id":"foo"}`), person); err == nil  {
+	if err := getJson(bytes.NewReader(bytes.NewBufferString(`{"id":"foo"}`).Bytes()), person); err == nil  {
 		t.Error("Did not receive expected error on bad JSON unmarshalling")
 	}
 }
