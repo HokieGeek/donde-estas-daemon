@@ -108,12 +108,13 @@ func TestRouting_PersonRequestHandler(t *testing.T) {
 		t.Fatal("Did not receive expected person")
 	}
 
-	// TODO: more?
-	/*
-		dataReq.Ids = append(dataReq.Ids, createRandomString())
-		personDataRequestJson, _ = json.Marshal(dataReq)
-		personDataRequestStr = string(personDataRequestJson)
-		req = httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(personDataRequestStr))
+	// Test that ... the ... dummy db works...
+	/* TODO: this mostly just tests the mock db anyway
+	req = httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(createRandomString()))
+	PersonRequestHandler(log, db, response, req)
+	if response.Code != http.StatusUnprocessableEntity {
+		t.Errorf("Did not receive expected failure HTTP status on bad request body: %d", response.Code)
+	}
 	*/
 }
 
