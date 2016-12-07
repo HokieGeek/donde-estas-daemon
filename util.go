@@ -6,7 +6,7 @@ import (
     "io/ioutil"
 )
 
-func ReadCloserJsonToStruct(stream io.ReadCloser, data interface{}) error {
+func readCloserJsonToStruct(stream io.ReadCloser, data interface{}) error {
 	defer stream.Close();
 	
 	str, err := ioutil.ReadAll(stream)
