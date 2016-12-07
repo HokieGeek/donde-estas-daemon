@@ -25,7 +25,7 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 		log.Println(string(bytes))
 	}
 
-	if err := getJson(r.Body, &req); err != nil {
+	if err := ReadCloserJsonToStruct(r.Body, &req); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
 		log.Printf("Received request for people with ids: %v\n", req.Ids)
@@ -54,7 +54,7 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 		log.Println(string(bytes))
 	}
 
-	if err := getJson(r.Body, &update); err != nil {
+	if err := ReadCloserJsonToStruct(r.Body, &update); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
 		log.Printf("Received update for person with id: %s\n", update.Id)
@@ -73,21 +73,6 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 			w.WriteHeader(http.StatusCreated)
 		}
 	}
-}
-
-func getJson(requestBody io.ReadCloser, data interface{}) error {
-	defer requestBody.Close();
-	
-	body, err := ioutil.ReadAll(requestBody)
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(body, &data); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func postJson(w http.ResponseWriter, httpStatus int, send interface{}) {
