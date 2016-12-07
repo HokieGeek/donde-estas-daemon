@@ -13,7 +13,7 @@ import (
 )
 
 func stringToReadCloser(str string) io.ReadCloser {
-    return ioutil.NopCloser(bytes.NewReader(bytes.NewBufferString(str)))
+	return ioutil.NopCloser(bytes.NewReader(bytes.NewBufferString(str).Bytes()))
 }
 
 func TestReadCloserToJson(t *testing.T) {
