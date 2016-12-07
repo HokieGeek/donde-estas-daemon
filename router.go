@@ -23,7 +23,7 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 		log.Println(string(bytes))
 	}
 
-	if err := ReadCloserJsonToStruct(r.Body, &req); err != nil {
+	if err := readCloserJsonToStruct(r.Body, &req); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
 		log.Printf("Received request for people with ids: %v\n", req.Ids)
@@ -52,7 +52,7 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 		log.Println(string(bytes))
 	}
 
-	if err := ReadCloserJsonToStruct(r.Body, &update); err != nil {
+	if err := readCloserJsonToStruct(r.Body, &update); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
 		log.Printf("Received update for person with id: %s\n", update.Id)
