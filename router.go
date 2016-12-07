@@ -3,8 +3,6 @@ package dondeestas
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
