@@ -48,9 +48,7 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
 	var update Person
 
-	if bytes, err := httputil.DumpRequest(r, true); err != nil {
-		log.Println(err)
-	} else {
+	if bytes, err := httputil.DumpRequest(r, true); err == nil {
 		log.Println(string(bytes))
 	}
 
@@ -75,7 +73,7 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 	}
 }
 
-func postJson(w http.ResponseWriter, httpStatus int, send interface{}) {
+func postJson(w http.ResponseWriter, httpStatus int, send interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -84,8 +82,10 @@ func postJson(w http.ResponseWriter, httpStatus int, send interface{}) {
 
 	w.WriteHeader(httpStatus)
 	if err := json.NewEncoder(w).Encode(send); err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func ListenAndServe(log *log.Logger, port int, db *dbclient) error {

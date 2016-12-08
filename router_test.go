@@ -24,7 +24,9 @@ func TestRouting_PostJson(t *testing.T) {
 	expectedPerson, _ := createRandomPerson()
 	expectedStatus := http.StatusOK
 	response := httptest.NewRecorder()
-	postJson(response, expectedStatus, expectedPerson)
+	if err := postJson(response, expectedStatus, expectedPerson); err != nil {
+		t.Fatalf("Unexpected error posting a JSON string: %s", err)
+	}
 
 	if response.Code != expectedStatus {
 		t.Fatalf("Expected http status %d but found %d", expectedStatus, response.Code)
@@ -36,8 +38,6 @@ func TestRouting_PostJson(t *testing.T) {
 	} else if !arePersonEqual(expectedPerson, &person) {
 		t.Fatal("Did not receive expected person")
 	}
-
-	// TODO: Can the send be nil? Can response be nil?
 }
 
 func TestRouting_UpdatePersonHandler(t *testing.T) {
