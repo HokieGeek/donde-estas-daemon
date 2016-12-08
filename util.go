@@ -2,13 +2,13 @@ package dondeestas
 
 import (
 	"encoding/json"
-    "io"
-    "io/ioutil"
+	"io"
+	"io/ioutil"
 )
 
 func readCloserJsonToStruct(stream io.ReadCloser, data interface{}) error {
-	defer stream.Close();
-	
+	defer stream.Close()
+
 	str, err := ioutil.ReadAll(stream)
 	if err != nil {
 		return err

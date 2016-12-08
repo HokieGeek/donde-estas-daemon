@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -172,17 +170,8 @@ func (db couchdb) Get(id string) (*Person, error) {
 		return nil, errors.New("Encountered an unknown error")
 	}
 
-	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1048576))
-	if err != nil {
-		return nil, err
-	}
-
-	if err = resp.Body.Close(); err != nil {
-		return nil, err
-	}
-
 	p := new(Person)
-	if err := json.Unmarshal(body, p); err != nil {
+	if err := readCloserJsonToStruct(resp.Body, p); err != nil {
 		return nil, err
 	}
 
@@ -222,17 +211,8 @@ func (db couchdb) Update(p Person) error {
 		return errors.New(fmt.Sprintf("Encountered an unexpected database error: %d", resp.StatusCode))
 	}
 
-	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1048576))
-	if err != nil {
-		return err
-	}
-
-	if err = resp.Body.Close(); err != nil {
-		return err
-	}
-
 	test := new(DocResp)
-	if err := json.Unmarshal(body, test); err != nil {
+	if err := readCloserJsonToStruct(resp.Body, test); err != nil {
 		return err
 	}
 

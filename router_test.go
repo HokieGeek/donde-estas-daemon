@@ -3,7 +3,6 @@ package dondeestas
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -37,7 +36,7 @@ func TestRouting_PostJson(t *testing.T) {
 	} else if !arePersonEqual(expectedPerson, &person) {
 		t.Fatal("Did not receive expected person")
 	}
-	
+
 	// TODO: Can the send be nil? Can response be nil?
 }
 
@@ -45,12 +44,12 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 	log := log.New(os.Stdout, "", 0)
 	response := httptest.NewRecorder()
 	db, server, _ := createRandomDbClient()
-	
+
 	// Build a person
 	expectedPerson, _ := createRandomPerson()
 	expectedPersonJson, _ := json.Marshal(expectedPerson)
 	expectedPersonStr := string(expectedPersonJson)
-		
+
 	// Test creating a new person
 	req := httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(expectedPersonStr))
 	UpdatePersonHandler(log, db, response, req)
@@ -63,7 +62,7 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 	} else if !arePersonEqual(expectedPerson, person) {
 		t.Fatal("Retrieved Person is not equivalent to the expected Person")
 	}
-	
+
 	// Test updating the same person
 	expectedPerson.Name = createRandomString()
 	expectedPersonJson, _ = json.Marshal(expectedPerson)
@@ -79,7 +78,7 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 	} else if !arePersonEqual(expectedPerson, person) {
 		t.Fatal("Retrieved Person is not equivalent to the expected Person")
 	}
-	
+
 	t.Skip("The rest fails unexpectedly")
 
 	// Test unable to process the body
@@ -89,7 +88,7 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 	if response.Code != http.StatusInternalServerError {
 		t.Errorf("Did not get expected HTTP error status code of %d. Instead got: %d", http.StatusInternalServerError, response.Code)
 	}
-	
+
 	// Test when the database is unable to comply with the request
 	req = httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(expectedPersonStr))
 	server.Close()
