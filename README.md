@@ -2,7 +2,7 @@
 The server side to the [¿Dónde Estás?](https://github.com/HokieGeek/DondeEstas) android app
 
 ##### Example usage
-###### Starting server
+###### Starting the servers
 ```sh
 docker run -d --name couchdb couchdb
 docker run -d -p 8080:8080 --link couchdb:db hokiegeek/donde-estas-daemon
