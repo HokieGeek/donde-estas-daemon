@@ -2,11 +2,16 @@ package dondeestas
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 )
 
 func readCloserJsonToStruct(stream io.ReadCloser, data interface{}) error {
+	if stream == nil {
+		return errors.New("Cannot read from nil steam")
+	}
+
 	defer stream.Close()
 
 	str, err := ioutil.ReadAll(stream)

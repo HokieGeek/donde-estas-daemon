@@ -39,4 +39,17 @@ func TestReadCloserJsonToStruct(t *testing.T) {
 	if err := readCloserJsonToStruct(stringToReadCloser(`{"id":"foo}`), nil); err == nil {
 		t.Error("Did not receive expected error on bad JSON unmarshalling")
 	}
+
+	// Set the stream to nil
+	if err := readCloserJsonToStruct(nil, nil); err == nil {
+		t.Error("Did not receive expected error on attempting to read from nil stream")
+	}
+
+	/*
+		strm := stringToReadCloser(expectedDummyStr)
+		strm.Close()
+		if err := readCloserJsonToStruct(strm, nil); err == nil {
+			t.Error("Did not receive expected error on attempting to read from closed stream")
+		}
+	*/
 }

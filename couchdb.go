@@ -28,10 +28,7 @@ func (db couchdb) req(params *request) (*http.Response, error) {
 	var req *http.Request
 	var err error
 	if params.person != nil {
-		p, err := json.Marshal(params.person)
-		if err != nil {
-			return nil, err
-		}
+		p, _ := json.Marshal(params.person)
 		data := bytes.NewBuffer(p)
 		req, err = http.NewRequest(params.command, db.url+"/"+params.path, data)
 		req.Header.Set("Content-Length", fmt.Sprintf("%d", data.Len()))
@@ -50,9 +47,7 @@ func (db couchdb) req(params *request) (*http.Response, error) {
 		}
 	}
 
-	if bytes, err := httputil.DumpRequest(req, true); err != nil {
-		log.Println(err)
-	} else {
+	if bytes, err := httputil.DumpRequest(req, true); err == nil {
 		log.Println("::Request Begin::")
 		log.Println(string(bytes))
 		log.Println("::Request End::")
@@ -63,9 +58,7 @@ func (db couchdb) req(params *request) (*http.Response, error) {
 		return nil, err
 	}
 
-	if bytes, err := httputil.DumpResponse(resp, true); err != nil {
-		log.Println(err)
-	} else {
+	if bytes, err := httputil.DumpResponse(resp, true); err == nil {
 		log.Println("::Response Begin::")
 		log.Println(string(bytes))
 		log.Println("::Response End::")
@@ -211,14 +204,16 @@ func (db couchdb) Update(p Person) error {
 		return errors.New(fmt.Sprintf("Encountered an unexpected database error: %d", resp.StatusCode))
 	}
 
-	test := new(DocResp)
-	if err := readCloserJsonToStruct(resp.Body, test); err != nil {
-		return err
-	}
+	/*
+		// TODO: use this
+		test := new(DocResp)
+		if err := readCloserJsonToStruct(resp.Body, test); err != nil {
+			return err
+		}
 
-	// TODO: use this
-	log.Println("Update response:")
-	log.Printf("%+v\n", test)
+		log.Println("Update response:")
+		log.Printf("%+v\n", test)
+	*/
 
 	return nil
 }

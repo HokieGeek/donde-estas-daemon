@@ -3,7 +3,6 @@ package dondeestas
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -39,7 +38,10 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 
 			switch r.Method {
 			case "GET":
-				if _, ok := db.People[path[1]]; ok {
+				if path[1] == "BADPERSON" {
+					w.WriteHeader(http.StatusOK)
+					fmt.Fprint(w, createRandomString())
+				} else if _, ok := db.People[path[1]]; ok {
 					w.WriteHeader(http.StatusOK)
 					fmt.Fprint(w, db.People[path[1]])
 				} else {
@@ -55,7 +57,7 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 					} else {
 						// TODO: check that If-Match matches what was created during the previous put!
 						defer r.Body.Close()
-						body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+						body, err := ioutil.ReadAll(r.Body)
 						if err != nil {
 							w.WriteHeader(http.StatusBadRequest)
 							fmt.Fprint(w, err)
@@ -133,9 +135,8 @@ func createRandomDbCouch() (*couchdb, *httptest.Server, error) {
 
 func TestCouchDb_Req(t *testing.T) {
 	db, server, _ := createRandomDbCouch_uninitialized()
+	defer server.Close()
 	person, _ := createRandomPerson()
-
-	// TODO: do I want to test that I get a "valid" response?
 
 	var req request
 	req.command = "HEAD"
@@ -155,27 +156,23 @@ func TestCouchDb_Req(t *testing.T) {
 
 	// Bad values
 	/// Bad command
-	// Testing a bad command will only test the dummy server! lol!
-	/*
-		if r, err := db.req(createRandomString(), db.dbname, nil); err == nil {
-			t.Error("Did not encounter expected error with random HTTP command")
-			t.Logf("Code: %d\n", r.StatusCode)
-		}
-	*/
-	/// Bad path
-	// Cannot test this as it would just test the dummy
-	/// Bad person
-	/* This might not be possible
-	badPerson, _ := createRandomPerson()
-	badPerson.Position.Tov = time.Unix(time.Now().Unix()-2e18, 0)
-	if _, err := db.req("HEAD", db.dbname, person); err == nil {
-		t.Error("Did not encounter expected error with bad person")
+	req.command = ""
+	if r, err := db.req(&req); err == nil {
+		t.Error("Did not encounter expected error with random HTTP command")
+		t.Logf("Code: %d\n", r.StatusCode)
 	}
-	*/
+
+	req.command = "HEAD"
+	db.url = ""
+	if r, err := db.req(&req); err == nil {
+		t.Error("Did not encounter expected error with blank hostname")
+		t.Logf("Code: %d\n", r.StatusCode)
+	}
 
 	// Simulate not having a network connection
-	server.Close()
-	req.person = nil
+	db, server2, _ := createRandomDbCouch_uninitialized()
+	server2.Close()
+	// req.person = nil
 	if _, err := db.req(&req); err == nil {
 		t.Fatal("Did not receive expected connection error")
 	}
@@ -340,6 +337,11 @@ func TestCouchDb_Get(t *testing.T) {
 		t.Fatal("Retrieved Person is not equivalent to the expected Person")
 	}
 
+	// Get a bad person
+	if _, err := db.Get("BADPERSON"); err == nil {
+		t.Fatal("Did not receive expected error when retrieving a bad Person object")
+	}
+
 	// Simulate connectivity error
 	server.Close()
 	if _, err := db.Get(expectedPerson.Id); err == nil {
@@ -380,6 +382,7 @@ func TestCouchDb_Update(t *testing.T) {
 		t.Error("Unexpectedly updated a person without network connectivity")
 	}
 }
+
 func TestCouchDb_Remove(t *testing.T) {
 	db, server, _ := createRandomDbCouch()
 
