@@ -7,8 +7,8 @@ if [ $# -gt 2 ]; then
     lat=$3
     lon=$4
 else
-    lat="39.18$(shuf -i 0-9999 -n 1)"
-    lon="-77.27$(shuf -i 0-9999 -n 1)"
+    lat="39.18"$(shuf -i 0-9999 -n 1)
+    lon="-77.27"$(shuf -i 0-9999 -n 1)
 fi
 
 curl -v ${host}/update --data \
