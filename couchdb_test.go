@@ -28,84 +28,59 @@ func splitURL(url string) (string, int) {
 
 func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 	db.People = make(map[string]string)
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	db.People["BADPERSON"] = createRandomString()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := strings.Split(r.URL.Path[1:], "/")
-		if len(path) == 0 {
-			w.WriteHeader(http.StatusNotFound)
-		} else {
-			// fmt.Println(r.Method)
-			// fmt.Println(path)
-
+		if len(path) > 0 {
 			switch r.Method {
-			case "GET":
-				if path[1] == "BADPERSON" {
-					w.WriteHeader(http.StatusOK)
-					fmt.Fprint(w, createRandomString())
+			case "HEAD":
+				if len(path) == 1 {
+					if path[0] == db.Name {
+						w.WriteHeader(http.StatusOK)
+					}
 				} else if _, ok := db.People[path[1]]; ok {
+					// TODO: just return what is set during the PUT
+					w.Header().Set("Etag", createRandomString())
 					w.WriteHeader(http.StatusOK)
+				}
+			case "GET":
+				if _, ok := db.People[path[1]]; ok {
 					fmt.Fprint(w, db.People[path[1]])
-				} else {
-					w.WriteHeader(http.StatusNotFound)
+					w.WriteHeader(http.StatusOK)
 				}
 			case "PUT":
 				if len(path) == 1 {
 					db.Name = path[0]
 					w.WriteHeader(http.StatusCreated)
-				} else {
-					if path[1] == "" {
-						w.WriteHeader(http.StatusNotFound)
+				} else if path[1] != "" {
+					// TODO: check that If-Match matches what was created during the previous put!
+					defer r.Body.Close()
+					if body, err := ioutil.ReadAll(r.Body); err != nil {
+						w.WriteHeader(http.StatusBadRequest)
+						fmt.Fprint(w, err)
 					} else {
-						// TODO: check that If-Match matches what was created during the previous put!
-						defer r.Body.Close()
-						body, err := ioutil.ReadAll(r.Body)
-						if err != nil {
-							w.WriteHeader(http.StatusBadRequest)
-							fmt.Fprint(w, err)
-						} else {
-							db.People[path[1]] = string(body)
-							w.WriteHeader(http.StatusCreated)
-							docResp := &docResp{ID: path[1],
-								Ok:  true,
-								Rev: createRandomString()}
-							docRespStr, _ := json.Marshal(docResp)
-							fmt.Fprint(w, string(docRespStr))
-						}
-					}
-				}
-			case "HEAD":
-				if len(path) == 1 {
-					if path[0] == db.Name {
-						w.WriteHeader(http.StatusOK)
-					} else {
-						w.WriteHeader(http.StatusNotFound)
-					}
-				} else {
-					if _, ok := db.People[path[1]]; ok {
-						// TODO: just return what is set during the PUT
-						w.Header().Set("Etag", createRandomString())
-						w.WriteHeader(http.StatusOK)
-					} else {
-						w.WriteHeader(http.StatusNotFound)
+						db.People[path[1]] = string(body)
+						w.WriteHeader(http.StatusCreated)
+						docResp := &docResp{ID: path[1],
+							Ok:  true,
+							Rev: createRandomString()}
+						docRespStr, _ := json.Marshal(docResp)
+						fmt.Fprint(w, string(docRespStr))
 					}
 				}
 			case "DELETE":
-				if len(path) >= 1 {
+				if len(path) > 1 {
 					if _, ok := db.People[path[1]]; ok {
 						delete(db.People, path[1])
 						w.WriteHeader(http.StatusOK)
-					} else {
-						w.WriteHeader(http.StatusNotFound)
 					}
-				} else {
-					w.WriteHeader(http.StatusNotFound)
 				}
 			default:
 				w.WriteHeader(http.StatusBadRequest)
 			}
 		}
+		w.WriteHeader(http.StatusNotFound)
 	}))
-
-	return ts
 }
 
 func createRandomDbCouchUninitialized() (*couchdb, *httptest.Server, error) {
