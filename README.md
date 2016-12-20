@@ -4,7 +4,7 @@ The server side to the [¿Dónde Estás?](https://github.com/HokieGeek/DondeEsta
 ##### Example usage
 ###### Starting the servers
 ```sh
-docker run -d --name couchdb couchdb
+docker run -d --name couchdb couchdb:1.6
 docker run -d -p 8080:8080 --link couchdb:db hokiegeek/donde-estas-daemon
 ```
 
