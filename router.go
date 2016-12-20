@@ -16,7 +16,7 @@ type PersonDataResponse struct {
 	People []Person `json:"people"`
 }
 
-func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
+func PersonRequestHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, r *http.Request) {
 	var req PersonDataRequest
 
 	if bytes, err := httputil.DumpRequest(r, true); err == nil {
@@ -45,7 +45,7 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 	}
 }
 
-func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r *http.Request) {
+func UpdatePersonHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, r *http.Request) {
 	var update Person
 
 	if bytes, err := httputil.DumpRequest(r, true); err == nil {
@@ -88,7 +88,7 @@ func postJSON(w http.ResponseWriter, httpStatus int, send interface{}) error {
 	return nil
 }
 
-func ListenAndServe(log *log.Logger, port int, db *dbclient) error {
+func ListenAndServe(log *log.Logger, port int, db *DbClient) error {
 	http.HandleFunc("/person",
 		func(w http.ResponseWriter, r *http.Request) {
 			PersonRequestHandler(log, db, w, r)

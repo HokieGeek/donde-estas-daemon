@@ -22,9 +22,9 @@ func main() {
 	logger.Printf("Connecting to %s on port %d\n", dbHost, dbPort)
 	logger.Printf("Serving on port %d\n", *httpPortPtr)
 
-	params := dondeestas.DbClientParams{dondeestas.couchDB, "donde", dbHost, dbPort}
+	params := dondeestas.DbClientParams{dondeestas.CouchDB, "donde", dbHost, dbPort}
 
-	db, err := dondeestas.newDbClient(params)
+	db, err := dondeestas.NewDbClient(params)
 	if err != nil {
 		panic(err)
 	}
