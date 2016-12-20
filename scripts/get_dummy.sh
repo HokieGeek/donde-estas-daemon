@@ -13,6 +13,6 @@ done
 # echo ${ids[@]}
 # exit 42
 
-set -x
-curl -v ${host}/person --data '{"ids":['"${ids[*]}"']}'
+# set -x
+curl ${host}/person --data '{"ids":['"${ids[*]}"']}'
 # curl -v ${host}/person --data '{"ids":["andres","keri","olivia"]}'
