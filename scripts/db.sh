@@ -1,6 +1,6 @@
 #!/bin/bash
 
-name="dondedb"
+name="couchdb"
 
 if [[ $1 == "--kill" ]]; then
     docker stop ${name}
