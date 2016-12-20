@@ -8,16 +8,16 @@ import (
 	"net/http/httputil"
 )
 
-type PersonDataRequest struct {
+type personDataRequest struct {
 	Ids []string `json:"ids"`
 }
 
-type PersonDataResponse struct {
+type personDataResponse struct {
 	People []Person `json:"people"`
 }
 
-func PersonRequestHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, r *http.Request) {
-	var req PersonDataRequest
+func personRequestHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, r *http.Request) {
+	var req personDataRequest
 
 	if bytes, err := httputil.DumpRequest(r, true); err == nil {
 		log.Println(string(bytes))
@@ -28,7 +28,7 @@ func PersonRequestHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, 
 	} else {
 		log.Printf("Received request for people with ids: %v\n", req.Ids)
 
-		var resp PersonDataResponse
+		var resp personDataResponse
 		resp.People = make([]Person, 0)
 
 		for _, id := range req.Ids {
@@ -45,7 +45,7 @@ func PersonRequestHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, 
 	}
 }
 
-func UpdatePersonHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, r *http.Request) {
+func updatePersonHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, r *http.Request) {
 	var update Person
 
 	if bytes, err := httputil.DumpRequest(r, true); err == nil {
@@ -88,15 +88,17 @@ func postJSON(w http.ResponseWriter, httpStatus int, send interface{}) error {
 	return nil
 }
 
+// ListenAndServe opens and HTTP server which listens for connections and provides
+// data using the given DbClient
 func ListenAndServe(log *log.Logger, port int, db *DbClient) error {
 	http.HandleFunc("/person",
 		func(w http.ResponseWriter, r *http.Request) {
-			PersonRequestHandler(log, db, w, r)
+			personRequestHandler(log, db, w, r)
 		})
 
 	http.HandleFunc("/update",
 		func(w http.ResponseWriter, r *http.Request) {
-			UpdatePersonHandler(log, db, w, r)
+			updatePersonHandler(log, db, w, r)
 		})
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)

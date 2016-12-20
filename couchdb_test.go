@@ -320,7 +320,7 @@ func TestCouchDb_Exists(t *testing.T) {
 func TestCouchDb_Get(t *testing.T) {
 	db, server, _ := createRandomDbCouch()
 
-	// Retrieve a non-existant person
+	// Retrieve a non-existent person
 	if _, err := db.Get(createRandomString()); err == nil {
 		t.Error("Retrieved Person object from empty database")
 	}
@@ -352,7 +352,7 @@ func TestCouchDb_Get(t *testing.T) {
 func TestCouchDb_Update(t *testing.T) {
 	db, server, _ := createRandomDbCouch()
 
-	// Update a non-existant person
+	// Update a non-existent person
 	expectedPerson, _ := createRandomPerson()
 	if err := db.Update(*expectedPerson); err != nil {
 		t.Fatalf("Encountered error when 'updating' a new person: %s", err)
