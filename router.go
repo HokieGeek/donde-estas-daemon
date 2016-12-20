@@ -93,10 +93,9 @@ func postJSON(w http.ResponseWriter, httpStatus int, send interface{}) error {
 //
 // The following routes are available:
 //  /person
-//        This route returns data on the request people. It expects a JSON body with the following format:
-//        { ids: []{ "identifier" } }
-//        Where "identifier" is a string used to identify the people being requested
-//        It returns a JSON with an array of Person objects
+//        This route returns data on the request people.
+//        It expects a JSON object with a single array of strings with the Person identifiers named 'ids'
+//        It returns a JSON with an array of Person objects named 'people'
 //
 //  /update
 //        This route expects a JSON body with a single Person object to update
