@@ -169,7 +169,7 @@ func TestRouting_personRequestHandler(t *testing.T) {
 	}
 }
 
-func ExampleListenAndServe(t *testing.T) {
+func ExampleListenAndServe() {
 	db, err := NewDbClient(DbClientParams{CouchDB, "example_db", "localhost", 5934})
 	if err != nil {
 		panic(err)

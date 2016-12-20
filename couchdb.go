@@ -181,7 +181,7 @@ type docResp struct {
 	Rev string `json:"rev"` // Revision MVCC token
 }
 
-func (db couchdb) getRevisionId(p Person) (*http.Response, error) {
+func (db couchdb) getRevisionID(p Person) (*http.Response, error) {
 	var req request
 	req.command = "HEAD"
 	req.path = db.personPath(p.ID)
@@ -198,7 +198,7 @@ func (db couchdb) Update(p Person) error {
 	log.Printf("Update(%s)\n", p.ID)
 
 	var req request
-	if resp, err := db.getRevisionId(p); err != nil {
+	if resp, err := db.getRevisionID(p); err != nil {
 		return err
 	} else if resp.StatusCode == http.StatusOK {
 		req.headers = make(map[string]string)
@@ -220,7 +220,7 @@ func (db couchdb) Update(p Person) error {
 
 	/*
 		// TODO: use this
-		test := new(DocResp)
+		test := new(docResp)
 		if err := readCloserJSONToStruct(resp.Body, test); err != nil {
 			return err
 		}

@@ -72,7 +72,6 @@ func getMockCouchDbServer(db *MockCouchDb) *httptest.Server {
 							docResp := &docResp{ID: path[1],
 								Ok:  true,
 								Rev: db.Revisions[path[1]]}
-							// Rev: createRandomString()}
 							docRespStr, _ := json.Marshal(docResp)
 							fmt.Fprint(w, string(docRespStr))
 						}
@@ -358,12 +357,12 @@ func TestCouchDb_Get(t *testing.T) {
 	}
 }
 
-func TestCouchDb_getRevisionId(t *testing.T) {
+func TestCouchDb_getRevisionID(t *testing.T) {
 	db, server, _ := createRandomDbCouch()
 
 	// Update a non-existent person
 	expectedPerson, _ := createRandomPerson()
-	resp, err := db.getRevisionId(*expectedPerson)
+	resp, err := db.getRevisionID(*expectedPerson)
 	if err != nil {
 		t.Fatalf("Encountered error when retrieving revision id: %s", err)
 	} else if resp.StatusCode != http.StatusNotFound {
@@ -374,7 +373,7 @@ func TestCouchDb_getRevisionId(t *testing.T) {
 
 	// Simulate loosing network connectivity
 	server.Close()
-	if _, err := db.getRevisionId(*expectedPerson); err == nil {
+	if _, err := db.getRevisionID(*expectedPerson); err == nil {
 		t.Error("Unexpectedly updated a person without network connectivity")
 	}
 }
