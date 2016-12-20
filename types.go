@@ -1,8 +1,6 @@
 package dondeestas
 
-import (
-	"time"
-)
+import "time"
 
 // Person encapsulates all of the data needed for tracking a user
 type Person struct {

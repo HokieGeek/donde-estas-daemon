@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 )
 
 type couchdb struct {
@@ -100,12 +101,12 @@ func (db couchdb) personPath(id string) string {
 
 func (db *couchdb) Init(dbname, hostname string, port int) error {
 	log.Printf("Init(%s, %s, %d)", dbname, hostname, port)
-	// TODO: dbname and hostname cannot b e whitespace
-	if len(dbname) == 0 {
+
+	if len(strings.TrimSpace(dbname)) == 0 {
 		return errors.New("No database name specified")
 	}
 
-	if len(hostname) == 0 {
+	if len(strings.TrimSpace(hostname)) == 0 {
 		return errors.New("Hostname not specified")
 	}
 

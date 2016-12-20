@@ -21,7 +21,6 @@ func splitURL(url string) (string, int) {
 	sepPos := strings.LastIndex(url, ":")
 	p, err := strconv.Atoi(url[sepPos+1:])
 	if err != nil {
-		// TODO
 		return "", sepPos
 	}
 	return url[:sepPos], p
@@ -255,7 +254,14 @@ func TestCouchDb_Init(t *testing.T) {
 		t.Error("Database unexpectedly initialized with invalid port number")
 	}
 
-	// TODO: test for whitespace
+	// Test for whitespace
+	if err := db.Init(" ", host, port); err == nil {
+		t.Error("Database unexpectedly initialized with name as a whitespace character")
+	}
+
+	if err := db.Init(dbname, " ", port); err == nil {
+		t.Error("Database unexpectedly initialized with hostname as a whitespace character")
+	}
 
 	// Simulate connectivity error
 	server.Close()
@@ -354,8 +360,6 @@ func TestCouchDb_Get(t *testing.T) {
 
 func TestCouchDb_getRevisionId(t *testing.T) {
 	db, server, _ := createRandomDbCouch()
-
-	// TODO: This needs to be a real number
 
 	// Update a non-existent person
 	expectedPerson, _ := createRandomPerson()

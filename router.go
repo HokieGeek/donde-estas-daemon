@@ -32,7 +32,7 @@ func personRequestHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, 
 		resp.People = make([]Person, 0)
 
 		for _, id := range req.Ids {
-			if person, err := (*db).Get(id); err == nil { // TODO: this pointer dereference
+			if person, err := (*db).Get(id); err == nil {
 				resp.People = append(resp.People, *person)
 			}
 		}
@@ -88,8 +88,18 @@ func postJSON(w http.ResponseWriter, httpStatus int, send interface{}) error {
 	return nil
 }
 
-// ListenAndServe opens and HTTP server which listens for connections and provides
-// data using the given DbClient
+// ListenAndServe opens an HTTP server which listens for connections and provides
+// data using the given DbClient.
+//
+// The following routes are available:
+//  /person
+//        This route returns data on the request people. It expects a JSON body with the following format:
+//        { ids: []{ "identifier" } }
+//        Where "identifier" is a string used to identify the people being requested
+//        It returns a JSON with an array of Person objects
+//
+//  /update
+//        This route expects a JSON body with a single Person object to update
 func ListenAndServe(log *log.Logger, port int, db *DbClient) error {
 	http.HandleFunc("/person",
 		func(w http.ResponseWriter, r *http.Request) {

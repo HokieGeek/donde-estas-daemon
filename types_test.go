@@ -64,7 +64,7 @@ func arePersonEqual(p1, p2 *Person) bool {
 	if p1.Visible != p2.Visible {
 		return false
 	}
-	/* TODO
+	/* TODO: finish!
 	if p1.Whitelist != p2.Whitelist {
 		return false
 	}

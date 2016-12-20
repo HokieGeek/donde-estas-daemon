@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
-	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -170,13 +169,13 @@ func TestRouting_personRequestHandler(t *testing.T) {
 	}
 }
 
-func TestRouting_ListenAndServe(t *testing.T) {
-	t.Skip("TODO")
-	port := rand.Int()
-	log := log.New(os.Stdout, "", 0)
-	db, server, _ := createRandomDbClient()
-	defer server.Close()
+func ExampleListenAndServe(t *testing.T) {
+	db, err := NewDbClient(DbClientParams{CouchDB, "example_db", "localhost", 5934})
+	if err != nil {
+		panic(err)
+	}
 
-	// TODO: use a goroutine to do some tests
-	go ListenAndServe(log, port, db)
+	logger := log.New(os.Stdout, "", 0)
+
+	logger.Fatal(ListenAndServe(logger, 8080, db))
 }
