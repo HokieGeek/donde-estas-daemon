@@ -38,6 +38,12 @@ func TestRouting_PostJson(t *testing.T) {
 	} else if !arePersonEqual(expectedPerson, &person) {
 		t.Fatal("Did not receive expected person")
 	}
+
+	// Attempt to post a struct with a struct that cannot be converted to JSON
+	badJSON := struct{ IntChan chan int }{IntChan: make(chan int)}
+	if err := postJSON(response, expectedStatus, badJSON); err == nil {
+		t.Error("Unexpectedly did not encounter an error when posting bad JSON struct")
+	}
 }
 
 func getPersonBufferString(p *Person) *bytes.Buffer {

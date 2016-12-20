@@ -31,7 +31,9 @@ func (db couchdb) req(params *request) (*http.Response, error) {
 		p, _ := json.Marshal(params.person)
 		data := bytes.NewBuffer(p)
 		req, err = http.NewRequest(params.command, db.url+"/"+params.path, data)
-		req.Header.Set("Content-Length", fmt.Sprintf("%d", data.Len()))
+		if err == nil {
+			req.Header.Set("Content-Length", fmt.Sprintf("%d", data.Len()))
+		}
 	} else {
 		req, err = http.NewRequest(params.command, db.url+"/"+params.path, nil)
 	}
@@ -67,18 +69,18 @@ func (db couchdb) req(params *request) (*http.Response, error) {
 	return resp, nil
 }
 
-func (db couchdb) createDb() (bool, error) {
-	if db.dbname == "" {
-		return false, errors.New("Database name is blank")
-	}
-
+func (db couchdb) dbExists() bool {
 	resp, err := db.req(&request{"HEAD", db.dbname, nil, nil})
 	if err != nil {
-		return false, err
+		return false
 	}
 
-	if resp.StatusCode != 404 {
-		return false, nil
+	return resp.StatusCode == http.StatusOK
+}
+
+func (db couchdb) dbCreate() (bool, error) {
+	if db.dbname == "" {
+		return false, errors.New("Database name is blank")
 	}
 
 	if _, err := db.req(&request{"PUT", db.dbname, nil, nil}); err != nil {
@@ -126,12 +128,14 @@ func (db *couchdb) Init(dbname, hostname string, port int) error {
 	}
 	db.url = url.String()
 
-	if ok, err := db.createDb(); !ok {
-		if err != nil {
-			return err
-		}
+	if db.dbExists() {
 		log.Printf("Found database: %s\n", db.dbname)
 	} else {
+		if ok, err := db.dbCreate(); !ok {
+			if err != nil {
+				return err
+			}
+		}
 		log.Printf("Created database: %s\n", db.dbname)
 	}
 
@@ -149,7 +153,7 @@ func (db couchdb) Exists(id string) bool {
 		return false
 	}
 
-	return resp.StatusCode == 200
+	return resp.StatusCode == http.StatusOK
 }
 
 func (db couchdb) Get(id string) (*Person, error) {
@@ -158,7 +162,7 @@ func (db couchdb) Get(id string) (*Person, error) {
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New("Encountered an unknown error")
 	}
 
@@ -176,30 +180,40 @@ type docResp struct {
 	Rev string `json:"rev"` // Revision MVCC token
 }
 
-func (db couchdb) Update(p Person) error {
-	log.Printf("Update(%s)\n", p.ID)
-
-	// First, retrieve the revision id
+func (db couchdb) getRevisionId(p Person) (*http.Response, error) {
 	var req request
 	req.command = "HEAD"
 	req.path = db.personPath(p.ID)
 
-	if resp, err := db.req(&req); err != nil {
+	resp, err := db.req(&req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (db couchdb) Update(p Person) error {
+	log.Printf("Update(%s)\n", p.ID)
+
+	var req request
+	if resp, err := db.getRevisionId(p); err != nil {
 		return err
-	} else if resp.StatusCode == 200 {
+	} else if resp.StatusCode == http.StatusOK {
 		req.headers = make(map[string]string)
 		req.headers["If-Match"] = resp.Header.Get("Etag")
 	}
 
 	// Perform the update
 	req.command = "PUT"
+	req.path = db.personPath(p.ID)
 	req.person = &p
 	resp, err := db.req(&req)
 	if err != nil {
 		return err
 	}
 
-	if resp.StatusCode != 201 && resp.StatusCode != 202 {
+	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusAccepted {
 		return fmt.Errorf("Encountered an unexpected database error: %d", resp.StatusCode)
 	}
 
@@ -223,7 +237,7 @@ func (db couchdb) Remove(id string) error {
 		return err
 	}
 
-	if resp.StatusCode != 200 && resp.StatusCode != 202 {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusAccepted {
 		return errors.New("Encountered an unknown error")
 	}
 

@@ -40,16 +40,15 @@ func TestReadCloserJsonToStruct(t *testing.T) {
 		t.Error("Did not receive expected error on bad JSON unmarshalling")
 	}
 
+	/* I am finding it impossible to instigate an error from the ReadAll in the function
+	strm := ioutil.NopCloser(bytes.NewReader(make([]byte, 0)))
+	if err := readCloserJSONToStruct(strm, nil); err == nil {
+		t.Error("Did not receive expected error on attempting to read from closed stream")
+	}
+	*/
+
 	// Set the stream to nil
 	if err := readCloserJSONToStruct(nil, nil); err == nil {
 		t.Error("Did not receive expected error on attempting to read from nil stream")
 	}
-
-	/*
-		strm := stringToReadCloser(expectedDummyStr)
-		strm.Close()
-		if err := readCloserJSONToStruct(strm, nil); err == nil {
-			t.Error("Did not receive expected error on attempting to read from closed stream")
-		}
-	*/
 }

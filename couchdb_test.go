@@ -44,9 +44,11 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 					w.WriteHeader(http.StatusOK)
 				}
 			case "GET":
-				if _, ok := db.People[path[1]]; ok {
-					fmt.Fprint(w, db.People[path[1]])
-					w.WriteHeader(http.StatusOK)
+				if len(path) > 1 {
+					if _, ok := db.People[path[1]]; ok {
+						fmt.Fprint(w, db.People[path[1]])
+						w.WriteHeader(http.StatusOK)
+					}
 				}
 			case "PUT":
 				if len(path) == 1 {
@@ -131,12 +133,12 @@ func TestCouchDb_Req(t *testing.T) {
 
 	// Bad values
 	/// Bad command
-	req.command = ""
-	if r, err := db.req(&req); err == nil {
-		t.Error("Did not encounter expected error with random HTTP command")
-		t.Logf("Code: %d\n", r.StatusCode)
+	req.command = "❤"
+	if _, err := db.req(&req); err == nil {
+		t.Error("Did not encounter expected error on bad HTTP method")
 	}
 
+	/// Bad hostname
 	req.command = "HEAD"
 	db.url = ""
 	if r, err := db.req(&req); err == nil {
@@ -147,35 +149,52 @@ func TestCouchDb_Req(t *testing.T) {
 	// Simulate not having a network connection
 	db, server2, _ := createRandomDbCouchUninitialized()
 	server2.Close()
-	// req.person = nil
 	if _, err := db.req(&req); err == nil {
 		t.Fatal("Did not receive expected connection error")
 	}
 }
 
-func TestCouchDb_CreateDb(t *testing.T) {
+func TestCouchDb_DbCreate(t *testing.T) {
 	db, server, _ := createRandomDbCouchUninitialized()
 
 	// Create new
-	if ok, err := db.createDb(); !ok {
+	if ok, err := db.dbCreate(); !ok {
 		t.Fatalf("Did not create database: %s", err)
-	}
-
-	// Do not create as already exists
-	if ok, _ := db.createDb(); ok {
-		t.Fatal("Unexpectedly created database which already existed")
 	}
 
 	// Attempt to create from blank name
 	db.dbname = ""
-	if ok, _ := db.createDb(); ok {
+	if ok, _ := db.dbCreate(); ok {
 		t.Fatal("Unexpectedly created database with a blank name")
 	}
 	db.dbname = createRandomString()
 
 	// Let's fail on network connectivity
 	server.Close()
-	if ok, _ := db.createDb(); ok {
+	if ok, _ := db.dbCreate(); ok {
+		t.Fatal("Unexpectedly created database with a no connection to the server")
+	}
+}
+
+func TestCouchDb_DbExists(t *testing.T) {
+	db, server, _ := createRandomDbCouchUninitialized()
+
+	// Check that Db doesn't already exist
+	if db.dbExists() {
+		t.Fatal("Non-existent database comes back as existent")
+	}
+
+	// Test if we can find created database
+	if ok, _ := db.dbCreate(); !ok {
+		t.Fatal("Unexpectedly failed at creating a database")
+	}
+	if !db.dbExists() {
+		t.Fatal("Did not find database which was created")
+	}
+
+	// Let's fail on network connectivity
+	server.Close()
+	if db.dbExists() {
 		t.Fatal("Unexpectedly created database with a no connection to the server")
 	}
 }
@@ -321,6 +340,29 @@ func TestCouchDb_Get(t *testing.T) {
 	server.Close()
 	if _, err := db.Get(expectedPerson.ID); err == nil {
 		t.Fatal("Unexpectedly retrieved person with connectivity error")
+	}
+}
+
+func TestCouchDb_getRevisionId(t *testing.T) {
+	db, server, _ := createRandomDbCouch()
+
+	// TODO: This needs to be a real number
+
+	// Update a non-existent person
+	expectedPerson, _ := createRandomPerson()
+	resp, err := db.getRevisionId(*expectedPerson)
+	if err != nil {
+		t.Fatalf("Encountered error when retrieving revision id: %s", err)
+	} else if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("Did not receive expected HTTP status of %d, instead received: %d", http.StatusNotFound, resp.StatusCode)
+	}
+
+	// TODO: what about when it does find it?!
+
+	// Simulate loosing network connectivity
+	server.Close()
+	if _, err := db.getRevisionId(*expectedPerson); err == nil {
+		t.Error("Unexpectedly updated a person without network connectivity")
 	}
 }
 
