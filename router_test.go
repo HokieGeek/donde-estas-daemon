@@ -13,8 +13,8 @@ import (
 
 func getExpectedPersonRequest() (*http.Request, *Person, *httptest.ResponseRecorder) {
 	expectedPerson, _ := createRandomPerson()
-	expectedPersonJson, _ := json.Marshal(expectedPerson)
-	expectedPersonStr := string(expectedPersonJson)
+	expectedPersonJSON, _ := json.Marshal(expectedPerson)
+	expectedPersonStr := string(expectedPersonJSON)
 	req := httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(expectedPersonStr))
 
 	return req, expectedPerson, httptest.NewRecorder()
@@ -24,7 +24,7 @@ func TestRouting_PostJson(t *testing.T) {
 	expectedPerson, _ := createRandomPerson()
 	expectedStatus := http.StatusOK
 	response := httptest.NewRecorder()
-	if err := postJson(response, expectedStatus, expectedPerson); err != nil {
+	if err := postJSON(response, expectedStatus, expectedPerson); err != nil {
 		t.Fatalf("Unexpected error posting a JSON string: %s", err)
 	}
 
@@ -59,7 +59,7 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 		t.Errorf("Did not get expected HTTP status code. Instead got: %d", response.Code)
 	}
 
-	if person, err := (*db).Get(expectedPerson.Id); err != nil {
+	if person, err := (*db).Get(expectedPerson.ID); err != nil {
 		t.Fatalf("Encountered error when retrieving person: %s", err)
 	} else if !arePersonEqual(expectedPerson, person) {
 		t.Fatal("Retrieved Person is not equivalent to the expected Person")
@@ -74,7 +74,7 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 		t.Errorf("Did not get expected HTTP status code. Instead got: %d", response.Code)
 	}
 
-	if person, err := (*db).Get(expectedPerson.Id); err != nil {
+	if person, err := (*db).Get(expectedPerson.ID); err != nil {
 		t.Fatalf("Encountered error when retrieving person: %s", err)
 	} else if !arePersonEqual(expectedPerson, person) {
 		t.Fatal("Retrieved Person is not equivalent to the expected Person")
@@ -89,7 +89,7 @@ func TestRouting_UpdatePersonHandler(t *testing.T) {
 	}
 
 	// Test unable to process the body
-	expectedPerson.Id = ""
+	expectedPerson.ID = ""
 	req = httptest.NewRequest("GET", "http://"+createRandomString(), getPersonBufferString(expectedPerson))
 	response = httptest.NewRecorder()
 	UpdatePersonHandler(log, db, response, req)
@@ -114,8 +114,8 @@ func createPersonDataRequest(ids []string) (*httptest.ResponseRecorder, *http.Re
 	for i, v := range ids {
 		dataReq.Ids[i] = v
 	}
-	personDataRequestJson, _ := json.Marshal(dataReq)
-	personDataRequestStr := string(personDataRequestJson)
+	personDataRequestJSON, _ := json.Marshal(dataReq)
+	personDataRequestStr := string(personDataRequestJSON)
 	req := httptest.NewRequest("GET", "http://"+createRandomString(), bytes.NewBufferString(personDataRequestStr))
 
 	return httptest.NewRecorder(), req
@@ -132,7 +132,7 @@ func TestRouting_PersonRequestHandler(t *testing.T) {
 	(*db).Create(*expectedPerson)
 
 	// Test usual case
-	response, req := createPersonDataRequest([]string{expectedPerson.Id})
+	response, req := createPersonDataRequest([]string{expectedPerson.ID})
 	PersonRequestHandler(log, db, response, req)
 	if response.Code != http.StatusOK {
 		t.Fatalf("Encountered unexpected HTTP code: %d\n", response.Code)
@@ -148,7 +148,7 @@ func TestRouting_PersonRequestHandler(t *testing.T) {
 	}
 
 	// Test getting partial list
-	response, req = createPersonDataRequest([]string{expectedPerson.Id, createRandomString()})
+	response, req = createPersonDataRequest([]string{expectedPerson.ID, createRandomString()})
 	PersonRequestHandler(log, db, response, req)
 	if response.Code != http.StatusPartialContent {
 		t.Fatalf("Expected HTTP Partial Content code (%d) but found %d instead\n", http.StatusPartialContent, response.Code)

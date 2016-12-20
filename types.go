@@ -4,8 +4,9 @@ import (
 	"time"
 )
 
+// Person encapsulates all of the data needed for tracking a user
 type Person struct {
-	Id       string `json:"id"`
+	ID       string `json:"id"`
 	Name     string `json:"name"`
 	Position struct {
 		Tov       time.Time `json:"tov"`

@@ -23,11 +23,11 @@ func TestReadCloserJsonToStruct(t *testing.T) {
 	expectedDummy.Val1 = createRandomString()
 	expectedDummy.Val2 = rand.Int()
 
-	expectedDummyJson, _ := json.Marshal(expectedDummy)
-	expectedDummyStr := string(expectedDummyJson)
+	expectedDummyJSON, _ := json.Marshal(expectedDummy)
+	expectedDummyStr := string(expectedDummyJSON)
 
 	var dummy dummyStruct
-	if err := readCloserJsonToStruct(stringToReadCloser(expectedDummyStr), &dummy); err != nil {
+	if err := readCloserJSONToStruct(stringToReadCloser(expectedDummyStr), &dummy); err != nil {
 		t.Fatalf("Encountered error when retrieving json from string: %s", err)
 	}
 
@@ -36,19 +36,19 @@ func TestReadCloserJsonToStruct(t *testing.T) {
 	}
 
 	// Incorrect with JSON object
-	if err := readCloserJsonToStruct(stringToReadCloser(`{"id":"foo}`), nil); err == nil {
+	if err := readCloserJSONToStruct(stringToReadCloser(`{"id":"foo}`), nil); err == nil {
 		t.Error("Did not receive expected error on bad JSON unmarshalling")
 	}
 
 	// Set the stream to nil
-	if err := readCloserJsonToStruct(nil, nil); err == nil {
+	if err := readCloserJSONToStruct(nil, nil); err == nil {
 		t.Error("Did not receive expected error on attempting to read from nil stream")
 	}
 
 	/*
 		strm := stringToReadCloser(expectedDummyStr)
 		strm.Close()
-		if err := readCloserJsonToStruct(strm, nil); err == nil {
+		if err := readCloserJSONToStruct(strm, nil); err == nil {
 			t.Error("Did not receive expected error on attempting to read from closed stream")
 		}
 	*/

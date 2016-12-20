@@ -6,15 +6,15 @@ import (
 )
 
 func createRandomDbClientParams() (DbClientParams, *httptest.Server) {
-	db, server, _ := createRandomDbCouch_uninitialized()
-	params := DbClientParams{CouchDB, createRandomString(), db.hostname, db.port}
+	db, server, _ := createRandomDbCouchUninitialized()
+	params := DbClientParams{couchDB, createRandomString(), db.hostname, db.port}
 	return params, server
 }
 
 func createRandomDbClient() (*dbclient, *httptest.Server, error) {
 	params, server := createRandomDbClientParams()
 
-	client, err := NewDbClient(params)
+	client, err := newDbClient(params)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -25,19 +25,19 @@ func createRandomDbClient() (*dbclient, *httptest.Server, error) {
 func TestNewDbClient(t *testing.T) {
 	params, server := createRandomDbClientParams()
 
-	if _, err := NewDbClient(params); err != nil {
+	if _, err := newDbClient(params); err != nil {
 		t.Fatalf("Error when creating new DbClient: %s", err)
 	}
 
 	params.DbName = ""
-	if _, err := NewDbClient(params); err == nil {
+	if _, err := newDbClient(params); err == nil {
 		t.Error("Unexpectedly created DbClient with empty DB name")
 	}
 	params.DbName = createRandomString()
 
 	// Simulate no network connectivity
 	server.Close()
-	if _, err := NewDbClient(params); err == nil {
+	if _, err := newDbClient(params); err == nil {
 		t.Error("Unexpetedly created DbClient with no connectivity")
 	}
 }

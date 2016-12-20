@@ -23,7 +23,7 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 		log.Println(string(bytes))
 	}
 
-	if err := readCloserJsonToStruct(r.Body, &req); err != nil {
+	if err := readCloserJSONToStruct(r.Body, &req); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
 		log.Printf("Received request for people with ids: %v\n", req.Ids)
@@ -38,9 +38,9 @@ func PersonRequestHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, 
 		}
 
 		if len(resp.People) == len(req.Ids) {
-			postJson(w, http.StatusOK, resp)
+			postJSON(w, http.StatusOK, resp)
 		} else {
-			postJson(w, http.StatusPartialContent, resp)
+			postJSON(w, http.StatusPartialContent, resp)
 		}
 	}
 }
@@ -52,13 +52,13 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 		log.Println(string(bytes))
 	}
 
-	if err := readCloserJsonToStruct(r.Body, &update); err != nil {
+	if err := readCloserJSONToStruct(r.Body, &update); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
-		log.Printf("Received update for person with id: %s\n", update.Id)
+		log.Printf("Received update for person with id: %s\n", update.ID)
 
 		var err error
-		if (*db).Exists(update.Id) {
+		if (*db).Exists(update.ID) {
 			err = (*db).Update(update)
 		} else {
 			err = (*db).Create(update)
@@ -73,7 +73,7 @@ func UpdatePersonHandler(log *log.Logger, db *dbclient, w http.ResponseWriter, r
 	}
 }
 
-func postJson(w http.ResponseWriter, httpStatus int, send interface{}) error {
+func postJSON(w http.ResponseWriter, httpStatus int, send interface{}) error {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")

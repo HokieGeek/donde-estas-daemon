@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 )
 
-func readCloserJsonToStruct(stream io.ReadCloser, data interface{}) error {
+func readCloserJSONToStruct(stream io.ReadCloser, data interface{}) error {
 	if stream == nil {
 		return errors.New("Cannot read from nil steam")
 	}

@@ -129,9 +129,8 @@ func (db *couchdb) Init(dbname, hostname string, port int) error {
 	if ok, err := db.createDb(); !ok {
 		if err != nil {
 			return err
-		} else {
-			log.Printf("Found database: %s\n", db.dbname)
 		}
+		log.Printf("Found database: %s\n", db.dbname)
 	} else {
 		log.Printf("Created database: %s\n", db.dbname)
 	}
@@ -140,7 +139,7 @@ func (db *couchdb) Init(dbname, hostname string, port int) error {
 }
 
 func (db couchdb) Create(p Person) error {
-	log.Printf("Create(%s)\n", p.Id)
+	log.Printf("Create(%s)\n", p.ID)
 	return db.Update(p)
 }
 
@@ -164,26 +163,26 @@ func (db couchdb) Get(id string) (*Person, error) {
 	}
 
 	p := new(Person)
-	if err := readCloserJsonToStruct(resp.Body, p); err != nil {
+	if err := readCloserJSONToStruct(resp.Body, p); err != nil {
 		return nil, err
 	}
 
 	return p, nil
 }
 
-type DocResp struct {
-	Id  string `json:"id"`
-	Ok  bool   `json:"ok"`
-	Rev string `json:"rev"`
+type docResp struct {
+	ID  string `json:"id"`  // Document ID
+	Ok  bool   `json:"ok"`  // Operaion Status
+	Rev string `json:"rev"` // Revision MVCC token
 }
 
 func (db couchdb) Update(p Person) error {
-	log.Printf("Update(%s)\n", p.Id)
+	log.Printf("Update(%s)\n", p.ID)
 
 	// First, retrieve the revision id
 	var req request
 	req.command = "HEAD"
-	req.path = db.personPath(p.Id)
+	req.path = db.personPath(p.ID)
 
 	if resp, err := db.req(&req); err != nil {
 		return err
@@ -201,13 +200,13 @@ func (db couchdb) Update(p Person) error {
 	}
 
 	if resp.StatusCode != 201 && resp.StatusCode != 202 {
-		return errors.New(fmt.Sprintf("Encountered an unexpected database error: %d", resp.StatusCode))
+		return fmt.Errorf("Encountered an unexpected database error: %d", resp.StatusCode)
 	}
 
 	/*
 		// TODO: use this
 		test := new(DocResp)
-		if err := readCloserJsonToStruct(resp.Body, test); err != nil {
+		if err := readCloserJSONToStruct(resp.Body, test); err != nil {
 			return err
 		}
 

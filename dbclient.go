@@ -1,9 +1,10 @@
 package dondeestas
 
+// DbClientTypes is an enumeration of database types supported by this library
 type DbClientTypes int
 
 const (
-	CouchDB DbClientTypes = 0 + iota
+	couchDB DbClientTypes = 0 + iota
 )
 
 type dbclient interface {
@@ -15,17 +16,18 @@ type dbclient interface {
 	Remove(id string) error
 }
 
+// DbClientParams encapsulates the options available for newDbClient
 type DbClientParams struct {
 	DbType           DbClientTypes
 	DbName, Hostname string
 	Port             int
 }
 
-func NewDbClient(params DbClientParams) (*dbclient, error) {
+func newDbClient(params DbClientParams) (*dbclient, error) {
 	var db dbclient
 
 	switch params.DbType {
-	case CouchDB:
+	case couchDB:
 		couch := new(couchdb)
 		db = dbclient(couch)
 	}

@@ -16,7 +16,7 @@ type DummyCouchDb struct {
 	People map[string]string
 }
 
-func splitUrl(url string) (string, int) {
+func splitURL(url string) (string, int) {
 	sepPos := strings.LastIndex(url, ":")
 	p, err := strconv.Atoi(url[sepPos+1:])
 	if err != nil {
@@ -64,7 +64,7 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 						} else {
 							db.People[path[1]] = string(body)
 							w.WriteHeader(http.StatusCreated)
-							docResp := &DocResp{Id: path[1],
+							docResp := &docResp{ID: path[1],
 								Ok:  true,
 								Rev: createRandomString()}
 							docRespStr, _ := json.Marshal(docResp)
@@ -108,10 +108,10 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 	return ts
 }
 
-func createRandomDbCouch_uninitialized() (*couchdb, *httptest.Server, error) {
+func createRandomDbCouchUninitialized() (*couchdb, *httptest.Server, error) {
 	server := getTestCouchDbServer(new(DummyCouchDb))
 
-	host, port := splitUrl(server.URL)
+	host, port := splitURL(server.URL)
 
 	db := new(couchdb)
 	db.dbname = createRandomString()
@@ -125,7 +125,7 @@ func createRandomDbCouch_uninitialized() (*couchdb, *httptest.Server, error) {
 func createRandomDbCouch() (*couchdb, *httptest.Server, error) {
 	server := getTestCouchDbServer(new(DummyCouchDb))
 
-	host, port := splitUrl(server.URL)
+	host, port := splitURL(server.URL)
 
 	db := new(couchdb)
 	db.Init(createRandomString(), host, port)
@@ -134,7 +134,7 @@ func createRandomDbCouch() (*couchdb, *httptest.Server, error) {
 }
 
 func TestCouchDb_Req(t *testing.T) {
-	db, server, _ := createRandomDbCouch_uninitialized()
+	db, server, _ := createRandomDbCouchUninitialized()
 	defer server.Close()
 	person, _ := createRandomPerson()
 
@@ -170,7 +170,7 @@ func TestCouchDb_Req(t *testing.T) {
 	}
 
 	// Simulate not having a network connection
-	db, server2, _ := createRandomDbCouch_uninitialized()
+	db, server2, _ := createRandomDbCouchUninitialized()
 	server2.Close()
 	// req.person = nil
 	if _, err := db.req(&req); err == nil {
@@ -179,7 +179,7 @@ func TestCouchDb_Req(t *testing.T) {
 }
 
 func TestCouchDb_CreateDb(t *testing.T) {
-	db, server, _ := createRandomDbCouch_uninitialized()
+	db, server, _ := createRandomDbCouchUninitialized()
 
 	// Create new
 	if ok, err := db.createDb(); !ok {
@@ -206,7 +206,7 @@ func TestCouchDb_CreateDb(t *testing.T) {
 }
 
 func TestCouchDb_PersonPath(t *testing.T) {
-	db, server, _ := createRandomDbCouch_uninitialized()
+	db, server, _ := createRandomDbCouchUninitialized()
 	defer server.Close()
 
 	id := createRandomString()
@@ -224,7 +224,7 @@ func TestCouchDb_PersonPath(t *testing.T) {
 func TestCouchDb_Init(t *testing.T) {
 	server := getTestCouchDbServer(new(DummyCouchDb))
 
-	host, port := splitUrl(server.URL)
+	host, port := splitURL(server.URL)
 	dbname := createRandomString()
 
 	db := new(couchdb)
@@ -276,7 +276,7 @@ func TestCouchDb_Create(t *testing.T) {
 		t.Fatalf("Encountered error when creating a person a second time: %s", err)
 	}
 
-	person.Id = ""
+	person.ID = ""
 	if err := db.Create(*person); err == nil {
 		t.Fatal("Unexpectedly created a person with a blank id")
 	}
@@ -301,7 +301,7 @@ func TestCouchDb_Exists(t *testing.T) {
 		t.Fatalf("Encountered error when creating a new person: %s", err)
 	}
 
-	if !db.Exists(person.Id) {
+	if !db.Exists(person.ID) {
 		t.Fatal("Did not find person which exists in the database")
 	}
 
@@ -312,7 +312,7 @@ func TestCouchDb_Exists(t *testing.T) {
 	}
 	server.Close()
 
-	if db.Exists(person.Id) {
+	if db.Exists(person.ID) {
 		t.Fatal("Found person in the database even though there is no connectivity")
 	}
 }
@@ -331,7 +331,7 @@ func TestCouchDb_Get(t *testing.T) {
 		t.Fatalf("Encountered error when creating a new person: %s", err)
 	}
 
-	if person, err := db.Get(expectedPerson.Id); err != nil {
+	if person, err := db.Get(expectedPerson.ID); err != nil {
 		t.Fatalf("Encountered error when retrieving person: %s", err)
 	} else if !arePersonEqual(expectedPerson, person) {
 		t.Fatal("Retrieved Person is not equivalent to the expected Person")
@@ -344,7 +344,7 @@ func TestCouchDb_Get(t *testing.T) {
 
 	// Simulate connectivity error
 	server.Close()
-	if _, err := db.Get(expectedPerson.Id); err == nil {
+	if _, err := db.Get(expectedPerson.ID); err == nil {
 		t.Fatal("Unexpectedly retrieved person with connectivity error")
 	}
 }
@@ -365,13 +365,13 @@ func TestCouchDb_Update(t *testing.T) {
 		t.Fatalf("Encountered error when updating an existent person: %s", err)
 	}
 
-	if person, err := db.Get(expectedPerson.Id); err != nil {
+	if person, err := db.Get(expectedPerson.ID); err != nil {
 		t.Fatalf("Encountered error when retrieving person: %s", err)
 	} else if person.Name != expectedName {
 		t.Fatalf("Expected name to have changed to '%s' but found '%s'", expectedName, person.Name)
 	}
 
-	expectedPerson.Id = ""
+	expectedPerson.ID = ""
 	if err := db.Update(*expectedPerson); err == nil {
 		t.Fatal("Unexpectedly updated a person with a blank id")
 	}
@@ -393,19 +393,19 @@ func TestCouchDb_Remove(t *testing.T) {
 	}
 
 	// Verify that they exist in the database
-	if person, err := db.Get(expectedPerson.Id); err != nil {
+	if person, err := db.Get(expectedPerson.ID); err != nil {
 		t.Fatalf("Encountered error when retrieving person: %s", err)
 	} else if !arePersonEqual(expectedPerson, person) {
 		t.Fatal("Retrieved Person is not equivalent to the expected Person")
 	}
 
 	// Remove that person
-	if err := db.Remove(expectedPerson.Id); err != nil {
+	if err := db.Remove(expectedPerson.ID); err != nil {
 		t.Fatalf("Encountered error when removing a person from the database: %s", err)
 	}
 
 	// Verify that they no longer exist in the database
-	if person, err := db.Get(expectedPerson.Id); err == nil {
+	if person, err := db.Get(expectedPerson.ID); err == nil {
 		t.Error("Unexpectedly did not receive an error when retrieving a removed person")
 		if arePersonEqual(expectedPerson, person) {
 			t.Fatal("Person was not removed")
@@ -427,7 +427,7 @@ func TestCouchDb_Remove(t *testing.T) {
 	server.Close()
 
 	// Remove that person
-	if err := db.Remove(expectedPerson.Id); err == nil {
+	if err := db.Remove(expectedPerson.ID); err == nil {
 		t.Error("Did not receive error when attempting to remove Person with connectivity problems")
 	}
 }

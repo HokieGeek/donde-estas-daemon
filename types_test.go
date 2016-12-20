@@ -19,7 +19,7 @@ func createRandomStringSlice() []string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	l := make([]string, r.Intn(20))
-	for i, _ := range l {
+	for i := range l {
 		l[i] = createRandomString()
 	}
 	return l
@@ -29,7 +29,7 @@ func createRandomPerson() (*Person, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	p := new(Person)
-	p.Id = createRandomString()
+	p.ID = createRandomString()
 	p.Name = createRandomString()
 	p.Position.Tov = time.Now()
 	p.Position.Latitude = r.Float32()
@@ -43,7 +43,7 @@ func createRandomPerson() (*Person, error) {
 }
 
 func arePersonEqual(p1, p2 *Person) bool {
-	if p1.Id != p2.Id {
+	if p1.ID != p2.ID {
 		return false
 	}
 	if p1.Name != p2.Name {
