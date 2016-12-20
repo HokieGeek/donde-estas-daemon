@@ -26,4 +26,4 @@ curl -v ${host}/update --data \
     "following" : ["andres","olivia"]
 }'
 
-curl -v ${host}/person --data '{"ids":["'${id}'"]}'
+# curl -v ${host}/person --data '{"ids":["'${id}'"]}'
