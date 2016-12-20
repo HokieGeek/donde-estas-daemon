@@ -22,8 +22,6 @@ curl -v ${host}/update --data \
         "elevation": 0.0
     },
     "visible" : true,
-    "whitelist" : ["andres","olivia"],
-    "following" : ["andres","olivia"]
+    "whitelist" : [],
+    "following" : []
 }'
-
-# curl -v ${host}/person --data '{"ids":["'${id}'"]}'
