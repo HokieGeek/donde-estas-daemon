@@ -11,9 +11,10 @@ import (
 	"testing"
 )
 
-type DummyCouchDb struct {
-	Name   string
-	People map[string]string
+type MockCouchDb struct {
+	Name      string
+	People    map[string]string
+	Revisions map[string]string
 }
 
 func splitURL(url string) (string, int) {
@@ -26,9 +27,13 @@ func splitURL(url string) (string, int) {
 	return url[:sepPos], p
 }
 
-func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
+func getMockCouchDbServer(db *MockCouchDb) *httptest.Server {
 	db.People = make(map[string]string)
+	db.Revisions = make(map[string]string)
+
 	db.People["BADPERSON"] = createRandomString()
+	db.Revisions["BADPERSON"] = createRandomString()
+
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := strings.Split(r.URL.Path[1:], "/")
 		if len(path) > 0 {
@@ -39,8 +44,7 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 						w.WriteHeader(http.StatusOK)
 					}
 				} else if _, ok := db.People[path[1]]; ok {
-					// TODO: just return what is set during the PUT
-					w.Header().Set("Etag", createRandomString())
+					w.Header().Set("Etag", db.Revisions[path[1]])
 					w.WriteHeader(http.StatusOK)
 				}
 			case "GET":
@@ -55,19 +59,24 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 					db.Name = path[0]
 					w.WriteHeader(http.StatusCreated)
 				} else if path[1] != "" {
-					// TODO: check that If-Match matches what was created during the previous put!
-					defer r.Body.Close()
-					if body, err := ioutil.ReadAll(r.Body); err != nil {
-						w.WriteHeader(http.StatusBadRequest)
-						fmt.Fprint(w, err)
+					if _, ok := db.People[path[1]]; ok && r.Header.Get("If-Match") != db.Revisions[path[1]] {
+						w.WriteHeader(http.StatusConflict)
 					} else {
-						db.People[path[1]] = string(body)
-						w.WriteHeader(http.StatusCreated)
-						docResp := &docResp{ID: path[1],
-							Ok:  true,
-							Rev: createRandomString()}
-						docRespStr, _ := json.Marshal(docResp)
-						fmt.Fprint(w, string(docRespStr))
+						defer r.Body.Close()
+						if body, err := ioutil.ReadAll(r.Body); err != nil {
+							w.WriteHeader(http.StatusBadRequest)
+							fmt.Fprint(w, err)
+						} else {
+							db.People[path[1]] = string(body)
+							db.Revisions[path[1]] = createRandomString()
+							w.WriteHeader(http.StatusCreated)
+							docResp := &docResp{ID: path[1],
+								Ok:  true,
+								Rev: db.Revisions[path[1]]}
+							// Rev: createRandomString()}
+							docRespStr, _ := json.Marshal(docResp)
+							fmt.Fprint(w, string(docRespStr))
+						}
 					}
 				}
 			case "DELETE":
@@ -86,7 +95,7 @@ func getTestCouchDbServer(db *DummyCouchDb) *httptest.Server {
 }
 
 func createRandomDbCouchUninitialized() (*couchdb, *httptest.Server, error) {
-	server := getTestCouchDbServer(new(DummyCouchDb))
+	server := getMockCouchDbServer(new(MockCouchDb))
 
 	host, port := splitURL(server.URL)
 
@@ -100,7 +109,7 @@ func createRandomDbCouchUninitialized() (*couchdb, *httptest.Server, error) {
 }
 
 func createRandomDbCouch() (*couchdb, *httptest.Server, error) {
-	server := getTestCouchDbServer(new(DummyCouchDb))
+	server := getMockCouchDbServer(new(MockCouchDb))
 
 	host, port := splitURL(server.URL)
 
@@ -216,7 +225,7 @@ func TestCouchDb_PersonPath(t *testing.T) {
 }
 
 func TestCouchDb_Init(t *testing.T) {
-	server := getTestCouchDbServer(new(DummyCouchDb))
+	server := getMockCouchDbServer(new(MockCouchDb))
 
 	host, port := splitURL(server.URL)
 	dbname := createRandomString()
