@@ -46,6 +46,6 @@ get)
         shift
     done
 
-    curl ${host}/person --data '{"ids":['"${ids[*]}"']}'
+    curl --silent ${host}/person --data '{"ids":['"${ids[*]}"']}'
     ;;
 esac
