@@ -21,7 +21,7 @@ func main() {
 	dbPort, _ := strconv.Atoi((*databaseURLPtr)[sepPos+1:])
 
 	logger := log.New(os.Stdout, "", 0)
-	logger.Printf(":: Connecting to database %s at %s on port %d\n", dbHost, dbPort)
+	logger.Printf(":: Connecting to database %s at %s on port %d\n", *databaseNamePtr, dbHost, dbPort)
 	logger.Printf(":: Serving on port %d\n", *httpPortPtr)
 
 	params := dondeestas.DbClientParams{dondeestas.CouchDB, *databaseNamePtr, dbHost, dbPort}
