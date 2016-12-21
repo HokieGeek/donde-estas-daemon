@@ -270,6 +270,27 @@ func TestCouchDb_Init(t *testing.T) {
 	}
 }
 
+func TestCouchDb_getRevisionID(t *testing.T) {
+	db, server, _ := createRandomDbCouch()
+
+	// Update a non-existent person
+	expectedPerson, _ := createRandomPerson()
+	revID, err := db.getRevisionID(*expectedPerson)
+	if err != nil {
+		t.Fatalf("Encountered error when retrieving revision id: %s", err)
+	} else if revID != "" {
+		t.Error("Unexpectedly received a revision id for a person which does not exist in the database")
+	}
+
+	// TODO: what about when it does find it?!
+
+	// Simulate loosing network connectivity
+	server.Close()
+	if _, err := db.getRevisionID(*expectedPerson); err == nil {
+		t.Error("Unexpectedly updated a person without network connectivity")
+	}
+}
+
 func TestCouchDb_Create(t *testing.T) {
 	db, server, _ := createRandomDbCouch()
 
@@ -357,28 +378,54 @@ func TestCouchDb_Get(t *testing.T) {
 	}
 }
 
-func TestCouchDb_getRevisionID(t *testing.T) {
+func TestCouchDb_updateWithRevision(t *testing.T) {
 	db, server, _ := createRandomDbCouch()
 
 	// Update a non-existent person
 	expectedPerson, _ := createRandomPerson()
-	resp, err := db.getRevisionID(*expectedPerson)
-	if err != nil {
-		t.Fatalf("Encountered error when retrieving revision id: %s", err)
-	} else if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("Did not receive expected HTTP status of %d, instead received: %d", http.StatusNotFound, resp.StatusCode)
+	if err := db.updateWithRevision(*expectedPerson, ""); err != nil {
+		t.Fatalf("Encountered error when 'updating' a new person: %s", err)
 	}
 
-	// TODO: what about when it does find it?!
+	expectedRevID, err := db.getRevisionID(*expectedPerson)
+	if err != nil {
+		t.Fatalf("Encountered error when retrieving revision id: %s", err)
+	}
+
+	// Update the same person again
+	expectedName := createRandomString()
+	expectedPerson.Name = expectedName
+	if err := db.updateWithRevision(*expectedPerson, expectedRevID); err != nil {
+		t.Fatalf("Encountered error when updating an existent person: %s", err)
+	}
+
+	if person, err := db.Get(expectedPerson.ID); err != nil {
+		t.Fatalf("Encountered error when retrieving person: %s", err)
+	} else if person.Name != expectedName {
+		t.Fatalf("Expected name to have changed to '%s' but found '%s'", expectedName, person.Name)
+	}
+
+	expectedRevID, err = db.getRevisionID(*expectedPerson)
+	if err != nil {
+		t.Fatalf("Encountered error when retrieving revision id: %s", err)
+	}
+
+	expectedPerson.ID = ""
+	if err := db.updateWithRevision(*expectedPerson, expectedRevID); err == nil {
+		t.Fatal("Unexpectedly updated a person with a blank id")
+	}
+
+	// t.Skip("TODO")
 
 	// Simulate loosing network connectivity
 	server.Close()
-	if _, err := db.getRevisionID(*expectedPerson); err == nil {
+	if err := db.updateWithRevision(*expectedPerson, expectedRevID); err == nil {
 		t.Error("Unexpectedly updated a person without network connectivity")
 	}
 }
 
 func TestCouchDb_Update(t *testing.T) {
+	t.Skip("TODO")
 	db, server, _ := createRandomDbCouch()
 
 	// Update a non-existent person

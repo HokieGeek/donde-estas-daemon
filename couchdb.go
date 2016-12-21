@@ -12,17 +12,15 @@ import (
 )
 
 type couchdb struct {
-	dbname   string
-	hostname string
-	port     int
-	url      string
+	dbname, hostname string
+	port             int
+	url              string
 }
 
 type request struct {
-	command string
-	path    string
-	person  *Person
-	headers map[string]string
+	command, path string
+	person        *Person
+	headers       map[string]string
 }
 
 func (db couchdb) req(params *request) (*http.Response, error) {
@@ -175,40 +173,40 @@ func (db couchdb) Get(id string) (*Person, error) {
 	return p, nil
 }
 
-type docResp struct {
-	ID  string `json:"id"`  // Document ID
-	Ok  bool   `json:"ok"`  // Operaion Status
-	Rev string `json:"rev"` // Revision MVCC token
-}
-
-func (db couchdb) getRevisionID(p Person) (*http.Response, error) {
+func (db couchdb) getRevisionID(p Person) (string, error) {
 	var req request
 	req.command = "HEAD"
 	req.path = db.personPath(p.ID)
 
 	resp, err := db.req(&req)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return resp, nil
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotModified {
+		return resp.Header.Get("Etag"), nil
+	}
+
+	return "", nil
 }
 
-func (db couchdb) Update(p Person) error {
-	log.Printf("Update(%s)\n", p.ID)
+type docResp struct {
+	ID  string `json:"id"`  // Document ID
+	Ok  bool   `json:"ok"`  // Operaion Status
+	Rev string `json:"rev"` // Revision MVCC token
+}
 
+func (db couchdb) updateWithRevision(p Person, revID string) error {
 	var req request
-	if resp, err := db.getRevisionID(p); err != nil {
-		return err
-	} else if resp.StatusCode == http.StatusOK {
+	if revID != "" {
 		req.headers = make(map[string]string)
-		req.headers["If-Match"] = resp.Header.Get("Etag")
+		req.headers["If-Match"] = revID
 	}
-
-	// Perform the update
 	req.command = "PUT"
 	req.path = db.personPath(p.ID)
 	req.person = &p
+
+	// Perform the update
 	resp, err := db.req(&req)
 	if err != nil {
 		return err
@@ -230,6 +228,17 @@ func (db couchdb) Update(p Person) error {
 	*/
 
 	return nil
+}
+
+func (db couchdb) Update(p Person) error {
+	log.Printf("Update(%s)\n", p.ID)
+
+	revID, err := db.getRevisionID(p)
+	if err != nil {
+		return err
+	}
+
+	return db.updateWithRevision(p, revID)
 }
 
 func (db couchdb) Remove(id string) error {
