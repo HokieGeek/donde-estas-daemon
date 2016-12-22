@@ -13,8 +13,9 @@ import (
 
 type couchdb struct {
 	dbname, hostname string
-	port             int
+	port             uint16
 	url              string
+	personPaths      map[string]string
 }
 
 type request struct {
@@ -23,22 +24,17 @@ type request struct {
 	headers       map[string]string
 }
 
-func (db couchdb) req(params *request) (*http.Response, error) {
-	var req *http.Request
-	var err error
+func (db couchdb) req(params *request) (resp *http.Response, err error) {
+	var data bytes.Buffer
 	if params.person != nil {
 		p, _ := json.Marshal(params.person)
-		data := bytes.NewBuffer(p)
-		req, err = http.NewRequest(params.command, db.url+"/"+params.path, data)
-		if err == nil {
-			req.Header.Set("Content-Length", fmt.Sprintf("%d", data.Len()))
-		}
-	} else {
-		req, err = http.NewRequest(params.command, db.url+"/"+params.path, nil)
+		data = *bytes.NewBuffer(p)
 	}
+	req, err := http.NewRequest(params.command, db.url+"/"+params.path, &data)
 	if err != nil {
-		return nil, err
+		return
 	}
+	req.Header.Set("Content-Length", fmt.Sprintf("%d", data.Len()))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
@@ -54,9 +50,9 @@ func (db couchdb) req(params *request) (*http.Response, error) {
 		log.Println("::Request End::")
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	if bytes, err := httputil.DumpResponse(resp, true); err == nil {
@@ -65,11 +61,11 @@ func (db couchdb) req(params *request) (*http.Response, error) {
 		log.Println("::Response End::")
 	}
 
-	return resp, nil
+	return
 }
 
 func (db couchdb) dbExists() bool {
-	resp, err := db.req(&request{"HEAD", db.dbname, nil, nil})
+	resp, err := db.req(&request{command: "HEAD", path: db.dbname})
 	if err != nil {
 		return false
 	}
@@ -77,27 +73,33 @@ func (db couchdb) dbExists() bool {
 	return resp.StatusCode == http.StatusOK
 }
 
-func (db couchdb) dbCreate() (bool, error) {
+func (db couchdb) dbCreate() error {
 	if db.dbname == "" {
-		return false, errors.New("Database name is blank")
+		return errors.New("Database name is blank")
 	}
 
-	if _, err := db.req(&request{"PUT", db.dbname, nil, nil}); err != nil {
-		return false, err
+	if _, err := db.req(&request{command: "PUT", path: db.dbname}); err != nil {
+		return err
 	}
 
-	return true, nil
+	return nil
 }
 
 func (db couchdb) personPath(id string) string {
+	if path, ok := db.personPaths[id]; ok {
+		return path
+	}
+
 	var buf bytes.Buffer
 	buf.WriteString(db.dbname)
 	buf.WriteString("/")
 	buf.WriteString(id)
-	return buf.String()
+	db.personPaths[id] = buf.String()
+
+	return db.personPaths[id]
 }
 
-func (db *couchdb) Init(dbname, hostname string, port int) error {
+func (db *couchdb) Init(dbname, hostname string, port uint16) error {
 	log.Printf("Init(%s, %s, %d)", dbname, hostname, port)
 
 	if len(strings.TrimSpace(dbname)) == 0 {
@@ -108,10 +110,7 @@ func (db *couchdb) Init(dbname, hostname string, port int) error {
 		return errors.New("Hostname not specified")
 	}
 
-	if port < 0 {
-		return errors.New("Invalid port number")
-	}
-
+	db.personPaths = make(map[string]string)
 	db.dbname = dbname
 	db.hostname = hostname
 	db.port = port
@@ -120,25 +119,16 @@ func (db *couchdb) Init(dbname, hostname string, port int) error {
 	if len(db.hostname) < 4 || db.hostname[:4] != "http" {
 		url.WriteString("http://")
 	}
-	url.WriteString(db.hostname)
-	if db.port > -1 {
-		url.WriteString(":")
-		url.WriteString(fmt.Sprintf("%d", db.port))
-	}
+	url.WriteString(fmt.Sprintf("%s:%d", db.hostname, db.port))
 	db.url = url.String()
 
 	if db.dbExists() {
 		log.Printf("Found database: %s\n", db.dbname)
-	} else {
-		if ok, err := db.dbCreate(); !ok {
-			if err != nil {
-				return err
-			}
-		}
-		log.Printf("Created database: %s\n", db.dbname)
+		return nil
 	}
 
-	return nil
+	log.Printf("Creating database: %s\n", db.dbname)
+	return db.dbCreate()
 }
 
 func (db couchdb) Create(p Person) error {
@@ -147,7 +137,7 @@ func (db couchdb) Create(p Person) error {
 }
 
 func (db couchdb) Exists(id string) bool {
-	resp, err := db.req(&request{"HEAD", db.personPath(id), nil, nil})
+	resp, err := db.req(&request{command: "HEAD", path: db.personPath(id)})
 	if err != nil {
 		return false
 	}
@@ -156,7 +146,7 @@ func (db couchdb) Exists(id string) bool {
 }
 
 func (db couchdb) Get(id string) (*Person, error) {
-	resp, err := db.req(&request{"GET", db.personPath(id), nil, nil})
+	resp, err := db.req(&request{command: "GET", path: db.personPath(id)})
 	if err != nil {
 		return nil, err
 	}
@@ -165,29 +155,23 @@ func (db couchdb) Get(id string) (*Person, error) {
 		return nil, errors.New("Encountered an unknown error")
 	}
 
-	p := new(Person)
-	if err := readCloserJSONToStruct(resp.Body, p); err != nil {
-		return nil, err
-	}
-
-	return p, nil
+	person := new(Person)
+	return person, readCloserJSONToStruct(resp.Body, person)
 }
 
 func (db couchdb) getRevisionID(p Person) (string, error) {
-	var req request
-	req.command = "HEAD"
-	req.path = db.personPath(p.ID)
-
-	resp, err := db.req(&req)
+	resp, err := db.req(&request{command: "HEAD", path: db.personPath(p.ID)})
 	if err != nil {
 		return "", err
 	}
 
-	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusNotModified {
-		return resp.Header.Get("Etag"), nil
+	var revID string
+	switch resp.StatusCode {
+	case http.StatusOK, http.StatusNotModified:
+		revID = resp.Header.Get("Etag")
 	}
 
-	return "", nil
+	return revID, nil
 }
 
 type docResp struct {
@@ -197,17 +181,14 @@ type docResp struct {
 }
 
 func (db couchdb) updateWithRevision(p Person, revID string) error {
-	var req request
+	req := &request{command: "PUT", path: db.personPath(p.ID), person: &p}
 	if revID != "" {
 		req.headers = make(map[string]string)
 		req.headers["If-Match"] = revID
 	}
-	req.command = "PUT"
-	req.path = db.personPath(p.ID)
-	req.person = &p
 
 	// Perform the update
-	resp, err := db.req(&req)
+	resp, err := db.req(req)
 	if err != nil {
 		return err
 	}
@@ -242,7 +223,7 @@ func (db couchdb) Update(p Person) error {
 }
 
 func (db couchdb) Remove(id string) error {
-	resp, err := db.req(&request{"DELETE", db.personPath(id), nil, nil})
+	resp, err := db.req(&request{command: "DELETE", path: db.personPath(id)})
 	if err != nil {
 		return err
 	}

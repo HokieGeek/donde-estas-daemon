@@ -19,9 +19,5 @@ func readCloserJSONToStruct(stream io.ReadCloser, data interface{}) error {
 
 	defer stream.Close()
 
-	if err := json.Unmarshal(str, &data); err != nil {
-		return err
-	}
-
-	return nil
+	return json.Unmarshal(str, &data)
 }

@@ -17,12 +17,11 @@ type personDataResponse struct {
 }
 
 func personRequestHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, r *http.Request) {
-	var req personDataRequest
-
 	if bytes, err := httputil.DumpRequest(r, true); err == nil {
 		log.Println(string(bytes))
 	}
 
+	var req personDataRequest
 	if err := readCloserJSONToStruct(r.Body, &req); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
@@ -37,21 +36,20 @@ func personRequestHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, 
 			}
 		}
 
-		if len(resp.People) == len(req.Ids) {
-			postJSON(w, http.StatusOK, resp)
-		} else {
-			postJSON(w, http.StatusPartialContent, resp)
+		code := http.StatusOK
+		if len(resp.People) != len(req.Ids) {
+			code = http.StatusPartialContent
 		}
+		postJSON(w, code, resp) // TODO
 	}
 }
 
 func updatePersonHandler(log *log.Logger, db *DbClient, w http.ResponseWriter, r *http.Request) {
-	var update Person
-
 	if bytes, err := httputil.DumpRequest(r, true); err == nil {
 		log.Println(string(bytes))
 	}
 
+	var update Person
 	if err := readCloserJSONToStruct(r.Body, &update); err != nil {
 		http.Error(w, fmt.Sprintf("%s\n", err), http.StatusUnprocessableEntity)
 	} else {
@@ -81,11 +79,8 @@ func postJSON(w http.ResponseWriter, httpStatus int, send interface{}) error {
 	w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
 
 	w.WriteHeader(httpStatus)
-	if err := json.NewEncoder(w).Encode(send); err != nil {
-		return err
-	}
 
-	return nil
+	return json.NewEncoder(w).Encode(send)
 }
 
 // ListenAndServe opens an HTTP server which listens for connections and provides

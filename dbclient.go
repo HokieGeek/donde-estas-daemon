@@ -1,8 +1,10 @@
 package dondeestas
 
+import "errors"
+
 // DbClient is the interface used by all structs which provide access to a database
 type DbClient interface {
-	Init(dbname, hostname string, port int) error
+	Init(dbname, hostname string, port uint16) error
 	Create(p Person) error
 	Exists(id string) bool
 	Get(id string) (*Person, error)
@@ -22,7 +24,7 @@ const (
 type DbClientParams struct {
 	DbType           DbClientTypes
 	DbName, Hostname string
-	Port             int
+	Port             uint16
 }
 
 // NewDbClient creates a database client of specified type at a specified URL
@@ -31,13 +33,10 @@ func NewDbClient(params DbClientParams) (*DbClient, error) {
 
 	switch params.DbType {
 	case CouchDB:
-		couch := new(couchdb)
-		db = DbClient(couch)
+		db = DbClient(new(couchdb))
+	default:
+		return nil, errors.New("Did not recognize the client type")
 	}
 
-	if err := db.Init(params.DbName, params.Hostname, params.Port); err != nil {
-		return nil, err
-	}
-
-	return &db, nil
+	return &db, db.Init(params.DbName, params.Hostname, params.Port)
 }

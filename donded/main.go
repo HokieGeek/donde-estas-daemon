@@ -18,14 +18,13 @@ func main() {
 
 	sepPos := strings.LastIndex(*databaseURLPtr, ":")
 	dbHost := (*databaseURLPtr)[:sepPos]
-	dbPort, _ := strconv.Atoi((*databaseURLPtr)[sepPos+1:])
+	dbPort, _ := strconv.ParseUint((*databaseURLPtr)[sepPos+1:], 10, 16)
 
 	logger := log.New(os.Stdout, "", 0)
 	logger.Printf(":: Connecting to database %s at %s on port %d\n", *databaseNamePtr, dbHost, dbPort)
 	logger.Printf(":: Serving on port %d\n", *httpPortPtr)
 
-	params := dondeestas.DbClientParams{dondeestas.CouchDB, *databaseNamePtr, dbHost, dbPort}
-
+	params := dondeestas.DbClientParams{dondeestas.CouchDB, *databaseNamePtr, dbHost, uint16(dbPort)}
 	db, err := dondeestas.NewDbClient(params)
 	if err != nil {
 		panic(err)

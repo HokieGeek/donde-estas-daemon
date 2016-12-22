@@ -17,13 +17,13 @@ type MockCouchDb struct {
 	Revisions map[string]string
 }
 
-func splitURL(url string) (string, int) {
+func splitURL(url string) (string, uint16) {
 	sepPos := strings.LastIndex(url, ":")
-	p, err := strconv.Atoi(url[sepPos+1:])
+	port, err := strconv.ParseUint(url[sepPos+1:], 10, 16)
 	if err != nil {
-		return "", sepPos
+		return "", 0
 	}
-	return url[:sepPos], p
+	return url[:sepPos], uint16(port)
 }
 
 func getMockCouchDbServer(db *MockCouchDb) *httptest.Server {
@@ -165,20 +165,20 @@ func TestCouchDb_DbCreate(t *testing.T) {
 	db, server, _ := createRandomDbCouchUninitialized()
 
 	// Create new
-	if ok, err := db.dbCreate(); !ok {
+	if err := db.dbCreate(); err != nil {
 		t.Fatalf("Did not create database: %s", err)
 	}
 
 	// Attempt to create from blank name
 	db.dbname = ""
-	if ok, _ := db.dbCreate(); ok {
+	if err := db.dbCreate(); err == nil {
 		t.Fatal("Unexpectedly created database with a blank name")
 	}
 	db.dbname = createRandomString()
 
 	// Let's fail on network connectivity
 	server.Close()
-	if ok, _ := db.dbCreate(); ok {
+	if err := db.dbCreate(); err == nil {
 		t.Fatal("Unexpectedly created database with a no connection to the server")
 	}
 }
@@ -192,7 +192,7 @@ func TestCouchDb_DbExists(t *testing.T) {
 	}
 
 	// Test if we can find created database
-	if ok, _ := db.dbCreate(); !ok {
+	if err := db.dbCreate(); err != nil {
 		t.Fatal("Unexpectedly failed at creating a database")
 	}
 	if !db.dbExists() {
@@ -207,7 +207,7 @@ func TestCouchDb_DbExists(t *testing.T) {
 }
 
 func TestCouchDb_PersonPath(t *testing.T) {
-	db, server, _ := createRandomDbCouchUninitialized()
+	db, server, _ := createRandomDbCouch()
 	defer server.Close()
 
 	id := createRandomString()
@@ -247,10 +247,6 @@ func TestCouchDb_Init(t *testing.T) {
 
 	if err := db.Init(dbname, "", port); err == nil {
 		t.Error("Database unexpectedly initialized with empty hostname")
-	}
-
-	if err := db.Init(dbname, host, -1); err == nil {
-		t.Error("Database unexpectedly initialized with invalid port number")
 	}
 
 	// Test for whitespace

@@ -7,7 +7,8 @@ import (
 
 func createRandomDbClientParams() (DbClientParams, *httptest.Server) {
 	db, server, _ := createRandomDbCouchUninitialized()
-	params := DbClientParams{CouchDB, createRandomString(), db.hostname, db.port}
+	// params := DbClientParams{CouchDB, createRandomString(), db.hostname, db.port}
+	params := DbClientParams{CouchDB, createRandomString(), db.hostname, db.port} // TODO: random type
 	return params, server
 }
 
@@ -34,6 +35,11 @@ func TestNewDbClient(t *testing.T) {
 		t.Error("Unexpectedly created DbClient with empty DB name")
 	}
 	params.DbName = createRandomString()
+
+	params.DbType = DbClientTypes(42) // TODO
+	if _, err := NewDbClient(params); err == nil {
+		t.Error("Unexpectedly created DbClient with empty DB name")
+	}
 
 	// Simulate no network connectivity
 	server.Close()
