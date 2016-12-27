@@ -77,10 +77,10 @@ docker run --detach --volume ${dbDir}:${dbDir} --name ${dbname} couchdb:1.6
 docker build --tag hokiegeek/donde-estas-daemon ${here}/..
 docker run --detach --name ${servername} --publish ${port}:8080 --link ${dbname}:db hokiegeek/donde-estas-daemon
 
+sleep 10s
+
 docker logs -f ${dbname} >&3 2>&1 &
 docker logs -f ${servername} >&4 2>&1 &
-
-sleep 5s
 
 ## Add some "real" data
 ${here}/person.sh update ${host}:${port} ${updateOne}
