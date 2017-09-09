@@ -94,6 +94,8 @@ func postJSON(w http.ResponseWriter, httpStatus int, send interface{}) error {
 //
 //  /update
 //        This route expects a JSON body with a single Person object to update
+//  /app
+//		  This route merely downloads the apk
 func ListenAndServe(log *log.Logger, port int, db *DbClient) error {
 	http.HandleFunc("/person",
 		func(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +105,11 @@ func ListenAndServe(log *log.Logger, port int, db *DbClient) error {
 	http.HandleFunc("/update",
 		func(w http.ResponseWriter, r *http.Request) {
 			updatePersonHandler(log, db, w, r)
+		})
+
+	http.HandleFunc("/app",
+		func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "/apk/donde.apk")
 		})
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
